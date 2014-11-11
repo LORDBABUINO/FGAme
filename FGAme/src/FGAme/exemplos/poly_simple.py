@@ -12,10 +12,10 @@ def random_color():
 world = World()
 runner = Runner(world)
 
-obj1 = Poly.regular(N=3, length=130, pos_cm=(-200, 0), vel_cm=(100, 0), color=random_color(), omega_cm=0.0)
+obj1 = Poly.regular(N=3, length=130, pos_cm=(-200, 0), vel_cm=(200, 0), color=random_color(), omega_cm=0.0)
 world.add_object(obj1)
 
-obj2 = Poly.regular(N=5, length=100, pos_cm=(200, 0), theta_cm=pi / 4,
+obj2 = Poly.regular(N=5, length=100, pos_cm=(200, 0), vel_cm=(-100, -40), theta_cm=pi / 4,
                     color=random_color())
 world.add_object(obj2)
 

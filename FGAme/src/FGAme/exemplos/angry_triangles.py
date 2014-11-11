@@ -12,6 +12,7 @@ class Scenario:
     def floor(self):
         floor = Poly.rect(bbox=(-10000, 10000, -300, -150), color=(68, 170, 0))
         floor.is_dynamic_linear = False
+        floor.is_dynamic_angular = False
         return floor
 
     def pole(self):
@@ -60,7 +61,7 @@ tri.angular_boost(-5)
 # tri.is_dynamic_angular = False
 
 # Inicializa o mundo
-world = World(background=(0, 204, 255), gravity=80, rest_coeff=0.5, dfriction=0.1)
+world = World(background=(0, 204, 255), gravity=80, dfriction=0.01)
 runner = Runner(world)
 for obj in scene.get_objects():
     world.add_object(obj)

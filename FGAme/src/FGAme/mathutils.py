@@ -123,9 +123,9 @@ class Vector2D(object):
         cos_t, sin_t = cos(theta), sin(theta)
         return Vector2D(x * cos_t - y * sin_t, x * sin_t + y * cos_t) + axis
 
-################################################################################
-#                          Funções com vetores
-################################################################################
+#===============================================================================
+# Funções com vetores
+#===============================================================================
 def dot(v1, v2):
     '''Calcula o produto escalar entre dois vetores'''
 
@@ -166,9 +166,9 @@ def sign(x):
     else:
         return 0
 
-################################################################################
-#                        Área, centro de massa, etc
-################################################################################
+#===============================================================================
+# Área, centro de massa, etc
+#===============================================================================
 def _w_list(L):
     '''Calcula os termos W0 = 1/2 * (y1*x0 - y0*x1) de todos os pontos da lista'''
 
@@ -258,6 +258,55 @@ def inertia(L, mass, axis=None):
         # eixo
         D = (cm - axis)
         return I_cm + mass * (D.x ** 2 + D.y ** 2)
+
+def clip(poly1, poly2):
+    '''Sutherland-Hodgman polygon clipping'''
+
+    def inside(pt):
+        '''Retorna verdadeiro se o ponto estiver dentro do polígono 2'''
+        pt_rel = pt - r0
+        return T.x * pt_rel.y >= T.y * pt_rel.x
+
+    def intercept_point():
+        '''Retorna o ponto de intercepção entre os segmentos formados por 
+        r1-r0 e v1-v0'''
+
+        A = r0.x * r1.y - r0.y * r1.x
+        B = v0.x * v1.y - v0.y * v1.x
+        C = 1.0 / (T.x * T_.y - T.y * T_.x)
+        return Vector2D((-A * T_.x + B * T.x) * C, (-A * T_.y + B * T.y) * C)
+
+    out = poly1[:]
+    r0 = poly2[-1]
+
+    # Itera sobre todas as linhas definidas pelos lados do polígono 2
+    for r1 in poly2:
+        T = r1 - r0
+        points, out = out, []
+        v0 = points[-1]
+        v0_inside = inside(v0)
+
+        # Em cada linha, itera sobre todos os pontos do polígono de saída
+        # (inicialmente, o polígono 1)
+        for v1 in points:
+            T_ = v1 - v0
+
+            # Um vértice dentro e outro fora ==> cria ponto intermediário
+            # Dois vértices dentro ==> copia para a lista de saída
+            # Dois vértices fora ==> abandona o ponto anterior
+            v1_inside = inside(v1)
+            if (v1_inside + v0_inside) == 1:
+                out.append(intercept_point())
+            if v1_inside:
+                out.append(v1)
+
+            # Atualiza ponto anterior
+            v0 = v1
+            v0_inside = v1_inside
+
+        # Atualiza ponto inicial da face
+        r0 = r1
+    return(out)
 
 if __name__ == '__main__':
     import doctest

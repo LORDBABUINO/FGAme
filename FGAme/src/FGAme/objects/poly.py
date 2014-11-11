@@ -7,7 +7,7 @@ import pygame
 from math import trunc, sin
 from .base import PhysicsObject
 from .aabb import AABB
-from ..mathutils import Vector2D, area, inertia, center_of_mass, dot, cross, pi
+from ..mathutils import Vector2D, area, inertia, center_of_mass, dot, cross, pi, clip
 from ..collision import get_collision, Collision, get_collision_aabb
 
 class Poly(PhysicsObject):
@@ -204,7 +204,9 @@ def get_collision_poly(A, B, directions=None):
             directions = DEFAULT_DIRECTIONS
 
     # Testa se há superposição de sombras em todas as direções consideradas
-    shadows = []
+    # e calcula o menor valor para sombra e a direção normal
+    min_shadow = float('inf')
+    norm = None
     for u in directions:
         A_coords = [ round(dot(pt, u), 6) for pt in A.vertices ]
         B_coords = [ round(dot(pt, u), 6) for pt in B.vertices ]
@@ -214,48 +216,21 @@ def get_collision_poly(A, B, directions=None):
         shadow = minmax - maxmin
         if shadow < 0 :
             return None
-        else:
-            shadows.append((shadow, (A_coords, B_coords), (Amax, Amin, Bmax, Bmin)))
+        elif shadow < min_shadow:
+            min_shadow = shadow
+            norm = u
 
-    # Reconhece a direção de menor superposição
-    min_shadow = min(shadows)
-    idx = shadows.index(min_shadow)
-    min_shadow, coords, maxmins = min_shadow
-    norm = directions[idx]
-
-    # Determina o sinal da normal
-    A_coords_cm = dot(A.pos_cm, norm)
-    B_coords_cm = dot(B.pos_cm, norm)
-    norm_sign = 1
-    if A_coords_cm > B_coords_cm:
+    # Determina o sentido da normal
+    if dot(A.pos_cm, norm) > dot(B.pos_cm, norm):
         norm = -norm
-        norm_sign = -1
 
-    # Determina o ponto de colisão
-#     for ptA in A.vertices + A.middle_points():
-#         if B.is_internal_point(ptA):
-#             return Collision(A, B, ptA, norm, delta=min_shadow)
-#     for ptB in B.vertices + B.middle_points():
-#         if B.is_internal_point(ptB):
-#             return Collision(A, B, ptB, norm, delta=min_shadow)
-
-    # Determina se a face está num ponto de A ou de B
-    Acoords, Bcoords = coords
-    Amax, Amin, Bmax, Bmin = maxmins
-    if len(set(Acoords)) == len(Acoords):
-        return get_collision(B, A, directions)
-
-    shadow_middle = norm_sign * (Amax + Bmin) / 2
-    pass
-
-    A.pause()
-    B.pause()
-
-# @get_collision.dispatch(Poly, AABB)
-def get_collision_p_a(A, B):
-    col = get_collision_aabb(A, B)
-    if col: print(col)
-    return col
+    # Computa o polígono de intersecção e usa o seu centro de massa como ponto
+    # de colisão
+    clipped = clip(A.vertices, B.vertices)
+    if area(clipped) == 0:
+        return None
+    col_pt = center_of_mass(clipped)
+    return Collision(A, B, col_pt, norm, min_shadow)
 
 @get_collision.dispatch(Poly, AABB)
 def get_collision_poly_aabb(A, B):
@@ -264,7 +239,6 @@ def get_collision_poly_aabb(A, B):
     B_poly = Poly.rect(bbox=B.bbox, is_dynamic_angular=False, is_dynamic_linear=B.is_dynamic_linear)
     col = get_collision_poly(A, B_poly)
     if col is not None:
-        assert col.objects[0] is A
         col.objects = (A, B)
         return col
 
