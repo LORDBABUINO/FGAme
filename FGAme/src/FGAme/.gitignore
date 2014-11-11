@@ -1,0 +1,13 @@
+/__init__.pyc
+/collision.pyc
+/effects.pyc
+/engine.pyc
+/mathutils.pyc
+/multidispatch.pyc
+/objects.pyc
+/overlap.pyc
+/runner.pyc
+/screen.pyc
+/test.pyc
+/utils.pyc
+/world.pyc
