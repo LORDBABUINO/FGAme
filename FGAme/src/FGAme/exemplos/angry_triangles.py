@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+#-*- coding: utf8 -*-
 from __future__ import print_function
 
 from FGAme import *
@@ -10,20 +10,20 @@ def random_color():
 
 class Scenario:
     def floor(self):
-        floor = Poly.rect(bbox=(-10000, 10000, -300, -150), color=(68, 170, 0))
-        floor.is_dynamic_linear = False
-        floor.is_dynamic_angular = False
+        floor = AABB(bbox=(-10000, 10000, -300, -150), color=(68, 170, 0))
+        floor.make_static()
+        floor.pause()
         return floor
 
     def pole(self):
         pole = AABB(bbox=(-350, -340, -150, -50), color=(158, 86, 38))
-        pole.is_dynamic_linear = False
+        pole.make_static()
         return pole
 
     def boxes(self):
         height = 80
         width = 200
-        pos = Vector2D(250, -110)
+        pos = Vector(250, -110)
         shape = (width, height)
         p = Poly.rect(pos_cm=pos, shape=shape, color=(158, 86, 38))
         p.is_dynamic = False
@@ -53,19 +53,17 @@ scene = Scenario()
 L = 40
 h = 10 * sqrt(12)
 tri = Poly.regular(3, L, color=(200, 0, 0))
-print(tri.inertia)
-# tri.inertia *= 100
+tri.inertia *= 10
 tri.move((-345, -50 + L))
-tri.linear_boost((150, 150))
-tri.angular_boost(-5)
+tri.boost((150, 150))
+tri.aboost(-5)
 # tri.is_dynamic_angular = False
 
 # Inicializa o mundo
-world = World(background=(0, 204, 255), gravity=80, dfriction=0.01)
-runner = Runner(world)
+world = World(background=(0, 204, 255), gravity=80, dfriction=0.3, rest_coeff=0.5)
 for obj in scene.get_objects():
-    world.add_object(obj)
-world.add_object(tri)
+    world.add(obj)
+world.add(tri)
 
 # Inicia a simulação
-runner.run()
+world.run()

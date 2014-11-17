@@ -1,39 +1,40 @@
-# -*- coding: utf8 -*-
+#-*- coding: utf8 -*-
 from __future__ import absolute_import
 if __name__ == '__main__':
     __package__ = 'FGAme.objects'; import FGAme.objects
 
 import pygame
 from math import trunc, sin
-from .base import PhysicsObject
+from .base import Object
 from .aabb import AABB
-from ..mathutils import Vector2D, area, inertia, center_of_mass, dot, cross, pi, clip
+from ..mathutils import Vector, area, ROG_sqr, center_of_mass, dot, cross, pi, clip
+from ..utils import lazy
 from ..collision import get_collision, Collision, get_collision_aabb
 
-class Poly(PhysicsObject):
+class Poly(Object):
     '''Define um polígono arbitrário de N lados.'''
 
     def __init__(self, vertices, pos_cm=None, **kwds):
         if pos_cm is not None:
             raise TypeError('cannot define pos_cm for polygonal shapes')
 
-        self.vertices = [Vector2D(*pt) for pt in vertices]
-        self.pos_cm = center_of_mass(self.vertices)
-        self.xmin = min(pt.x for pt in self.vertices)
-        self.xmax = max(pt.x for pt in self.vertices)
-        self.ymin = min(pt.y for pt in self.vertices)
-        self.ymax = max(pt.y for pt in self.vertices)
+        self.vertices = [Vector(*pt) for pt in vertices]
+        super(Poly, self).__init__(pos_cm=(0, 0), **kwds)
+        self._xmin = min(pt.x for pt in self.vertices)
+        self._xmax = max(pt.x for pt in self.vertices)
+        self._ymin = min(pt.y for pt in self.vertices)
+        self._ymax = max(pt.y for pt in self.vertices)
+        self._pos_cm = center_of_mass(self.vertices)
         self.num_sides = len(self.vertices)
         self._normals_idxs = self.get_li_indexes()
         self.num_normals = len(self._normals_idxs or self.vertices)
 
         # Aceleramos um pouco o cálculo para o caso onde todas as normais são LI.
-        # Isto é sinalizado por self._normals_idx = None, que implica que todas
-        # as normais do polígono devem ser calculadas.
+        # entre si. Isto é sinalizado por self._normals_idx = None, que implica
+        # que todas as normais do polígono devem ser recalculadas.
         if self.num_normals == self.num_sides:
             self._normals_idxs = None
 
-        super(Poly, self).__init__(**kwds)
 
     #===========================================================================
     # Construtores alternativos
@@ -45,13 +46,13 @@ class Poly(PhysicsObject):
         alpha = pi / N
         theta = 2 * alpha
         b = length / (2 * sin(alpha))
-        P0 = Vector2D(b, 0)
+        P0 = Vector(b, 0)
         points = [ (P0.rotated(n * theta) + pos_cm) for n in range(N) ]
 
         return Poly(points, **kwds)
 
     @classmethod
-    def rect(cls, bbox=None, shape=None, pos_cm=None, **kwds):
+    def rect(cls, bbox=None, shape=None, pos_cm=None, centered=False, **kwds):
         '''Cria um retângulo especificando ou a caixa de contorno ou a posição 
         do centro de massa e a forma.'''
 
@@ -66,10 +67,13 @@ class Poly(PhysicsObject):
         elif shape:
             x, y = pos_cm or (0, 0)
             dx, dy = shape
-            xmin, xmax = x - dx / 2., x + dx / 2.
-            ymin, ymax = y - dy / 2., y + dy / 2.
+            if centered:
+                xmin, xmax = x - dx / 2., x + dx / 2.
+                ymin, ymax = y - dy / 2., y + dy / 2.
+            else:
+                xmin, xmax = x, x + dx
+                ymin, ymax = y, y + dy
             bbox = (xmin, xmax, ymin, ymax)
-
             return Poly.rect(bbox=bbox, **kwds)
 
         else:
@@ -124,7 +128,7 @@ class Poly(PhysicsObject):
 
         points = self.vertices
         x, y = points[(i + 1) % self.num_sides] - points[i]
-        return Vector2D(y, -x).normalized()
+        return Vector(y, -x).normalized()
 
     def get_normals(self):
         '''Retorna uma lista com as normais linearmente independentes.'''
@@ -133,7 +137,7 @@ class Poly(PhysicsObject):
             N = self.num_sides
             points = self.vertices
             segmentos = (points[(i + 1) % N] - points[i] for i in range(N))
-            return [ Vector2D(y, -x).normalized() for (x, y) in segmentos ]
+            return [ Vector(y, -x).normalized() for (x, y) in segmentos ]
         else:
             return [ self.get_normal(i) for i in self._normals_idxs ]
 
@@ -156,40 +160,35 @@ class Poly(PhysicsObject):
 
     def rotate(self, theta):
         super(Poly, self).rotate(theta)
-        self.vertices = [pt.rotated(theta, self.pos_cm) for pt in self.vertices]
-        self.xmin = min(pt.x for pt in self.vertices)
-        self.xmax = max(pt.x for pt in self.vertices)
-        self.ymin = min(pt.y for pt in self.vertices)
-        self.ymax = max(pt.y for pt in self.vertices)
+        self.vertices = [pt.rotated(theta, self._pos_cm) for pt in self.vertices]
+        self._xmin = min(pt.x for pt in self.vertices)
+        self._xmax = max(pt.x for pt in self.vertices)
+        self._ymin = min(pt.y for pt in self.vertices)
+        self._ymax = max(pt.y for pt in self.vertices)
+
+    def scale(self, scale, update_physics=False):
+        # Atualiza os pontos
+        Rcm = self.pos_cm
+        self.vertices = [ scale * (pt - Rcm) + Rcm for pt in self.vertices ]
+
+        # Atualiza AABB
+        X = [ x for (x, y) in self.vertices ]
+        Y = [ y for (x, y) in self.vertices ]
+        self._xmin, self._xmax = min(X), max(X)
+        self._ymin, self._ymax = min(Y), max(Y)
 
     @property
     def area(self):
         return area(self.vertices)
 
-    @property
-    def inertia(self):
-        try:
-            return self._inertia
-        except AttributeError:
-            self._inertia = inertia(self.vertices, self.mass)
-            return self._inertia
-
-    @inertia.setter
-    def inertia(self, value):
-        self._inertia = value
-
-    def scale(self, scale, update_physics=False):
-        # Atualiza a AABB
-        super(Poly, self).scale(scale, update_physics=False)
-
-        # Atualiza os pontos
-        Rcm = self.pos_cm
-        self.vertices = [ scale * (pt - Rcm) + Rcm for pt in self.vertices ]
+    @lazy
+    def ROG_sqr(self):
+        return ROG_sqr(self.vertices)
 
 #===============================================================================
 # Implementa colisões
 #===============================================================================
-u_x = Vector2D(1, 0)
+u_x = Vector(1, 0)
 DEFAULT_DIRECTIONS = [u_x.rotated(n * pi / 12) for n in [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11]]
 
 @get_collision.dispatch(Poly, Poly)
@@ -226,7 +225,11 @@ def get_collision_poly(A, B, directions=None):
 
     # Computa o polígono de intersecção e usa o seu centro de massa como ponto
     # de colisão
-    clipped = clip(A.vertices, B.vertices)
+    try:
+        clipped = clip(A.vertices, B.vertices)
+    except ValueError:  # não houve superposição (talvez por usar normais aproximadas)
+        return None
+
     if area(clipped) == 0:
         return None
     col_pt = center_of_mass(clipped)
@@ -236,8 +239,19 @@ def get_collision_poly(A, B, directions=None):
 def get_collision_poly_aabb(A, B):
     '''Implementa a colisão entre um polígono arbitrário e uma caixa AABB'''
 
-    B_poly = Poly.rect(bbox=B.bbox, is_dynamic_angular=False, is_dynamic_linear=B.is_dynamic_linear)
+    B_poly = Poly.rect(bbox=B.bbox, density=B.density)
     col = get_collision_poly(A, B_poly)
+    if col is not None:
+        col.objects = (A, B)
+        return col
+
+
+@get_collision.dispatch(AABB, Poly)
+def get_collision_poly_aabb(A, B):
+    '''Implementa a colisão entre um polígono arbitrário e uma caixa AABB'''
+
+    A_poly = Poly.rect(bbox=A.bbox, density=A.density)
+    col = get_collision_poly(A_poly, B)
     if col is not None:
         col.objects = (A, B)
         return col

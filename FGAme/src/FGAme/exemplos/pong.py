@@ -1,89 +1,46 @@
-# -*- coding: utf8 -*-
-from __future__ import print_function
+#-*- coding: utf8 -*-
+'''
+Implementação do tradicional jogo Pong.
+'''
 
 from FGAme import *
-from random import uniform, choice
+from random import uniform, choice, random
+from math import pi
 
-def random_color():
-    return tuple(int(uniform(0, 255)) for i in range(3))
+class Pong(World):
+    def __init__(self, **kwds):
+        super(Pong, self).__init__()
+        self.make_bounds(-800, 800, -290, 290)
 
-# Inicializa o mundo
-world = World(rest_coeff=1.0)
-world.make_bounds(-390, 600, -290, 290, delta=400)
-fundo = AABB((550, 599, -289, 289))
-fundo.pause()
-world.add_object(fundo)
-runner = Runner(world)
-PONTOS = 0
+        # Linha central
+        self.add(AABB(shape=(15, 550), color=(200, 200, 200)), has_collision=False)
 
-# Bola
-MAXSPEED = 800
-class Ball(Circle):
-    def post_update(self, t, dt):
-        if self.vel_cm.norm() > MAXSPEED:
-            self.vel_cm = self.vel_cm.normalized() * MAXSPEED
+        # Cria a bola com uma velocidade aleatória
+        self.ball = Circle(30, color='red', world=self, inertia='inf')
+        self.ball.vel_cm = (-400, choice([-1, 1]) * uniform(200, 400))
 
-SPEED = 600
-vel = Vector2D(-SPEED, choice([1, -1]) * uniform(SPEED / 2, SPEED))
-bola = Ball(radius=40, vel_cm=vel, color=random_color(), mass=1e-6)
-bola.scale(2.0)
-world.add_object(bola)
+        # Cria a barras
+        self.pong1 = AABB(shape=[20, 130], pos_cm=(350, 0), world=self, mass='inf')
+        self.pong2 = AABB(shape=[20, 130], pos_cm=(-350, 0), world=self, mass='inf')
 
-# Raquete
-class Raquete(AABB):
-    def avoid_superposition_aabb(self, other, dt):
-        '''Evita a superposição das caixas de contorno AABB'''
+        # Registra eventos
+        self.listen('long-press', 'up', self.move_up, (self.pong1,))
+        self.listen('long-press', 'down', self.move_down, (self.pong1,))
+        self.listen('long-press', 'w', self.move_up, (self.pong2,))
+        self.listen('long-press', 's', self.move_down, (self.pong2,))
+        self.listen('key-down', 'space', self.toggle_pause)
 
-        deltay = shadow_y(self, other)
-        n = 1 if other.ymin < self.ymin else -1
-        self.move((0, n * deltay))
+    def move_up(self, pong):
+        '''Move a raquete fornecida para cima'''
 
-    def draw(self, screen):
-        self.draw_aabb(screen, fill=True)
+        if pong.ymax < 290:
+            pong.move(Vector(0, 10))
 
-pos = Vector2D(300, 100)
-raquete = Raquete(pos_cm=pos, shape=(15, 70), vel_cm=(0, 0), color=random_color(), mass=1e9)
-raquete.is_dynamic = True
-world.add_object(raquete)
-raquete.scale(2.0)
+    def move_down(self, pong):
+        '''Move a raquete fornecida para baixo'''
 
-# Registra callbacks de interação com o usuário
-def setpos(x, y):
-    x_, y_ = raquete.pos_cm
-    raquete.set_position((x_, y))
+        if pong.ymin > -290:
+            pong.move(Vector(0, -10))
 
-runner.register_mouse_motion(setpos)
-
-# Registra callbacks de colisão
-def pong(col):
-    y_bola = bola.pos_cm.y
-    y_raquete = raquete.pos_cm.y
-    delta_y = y_bola - y_raquete
-    delta_vel = Vector2D(0, delta_y * 10)
-
-    # Edita a velocidade
-    vel = bola.vel_cm
-    vel += delta_vel
-    if abs(vel.x) > abs(0.2 * vel.y):
-        vel *= bola.vel_cm.norm() / vel.norm()
-        bola.vel_cm = vel
-
-def make_pts(col):
-    global PONTOS
-    PONTOS += 1
-
-    pos_x = 20 * PONTOS
-    pos_y = 360
-
-    mark = Circle(5, (pos_x - 390, 270), color='red')
-    world.add_object(mark, layer=1, has_collision=False)
-
-    if PONTOS >= 5:
-        print('Perdeu, playboy!')
-        raise SystemExit
-
-world.register_collision_callback(pong, raquete, bola)
-world.register_collision_callback(make_pts, bola, fundo)
-
-# Inicia a simulação
-runner.run()
+if __name__ == '__main__':
+    Pong().run()

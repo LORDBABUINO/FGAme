@@ -1,22 +1,23 @@
-# -*- coding: utf8 -*-
+#-*- coding: utf8 -*-
 from __future__ import absolute_import
 if __name__ == '__main__':
     __package__ = 'FGAme.objects'; import FGAme.objects
 
 import pygame
-from math import trunc
-from .base import LinearObject
-from ..mathutils import Vector2D
+from math import trunc, pi
+from .base import Object
+from ..mathutils import Vector
 from ..collision import get_collision, Collision
+from ..utils import lazy
 
-class Circle(LinearObject):
+class Circle(Object):
     '''Define um círculo e implementa a detecção de colisão comparando a 
     distância entre os centros com a soma dos raios.'''
 
-    def __init__(self, radius, pos_cm=Vector2D(0, 0), **kwds):
-        x, y = self.pos_cm = pos_cm
-        self.radius = float(radius)
-        super(Circle, self).__init__(**kwds)
+    def __init__(self, radius, *args, **kwds):
+        self._radius = float(radius)
+        super(Circle, self).__init__(*args, **kwds)
+        self.radius = self._radius  # recalcula a AABB de acordo com o raio
 
     def __repr__(self):
         tname = type(self).__name__
@@ -29,21 +30,13 @@ class Circle(LinearObject):
 
         screen.draw_circle(self.pos_cm, self.radius, color=self.color)
 
-    @property
+    @lazy
     def area(self):
-        return pi * self.radius ** 2
+        return pi * self._radius ** 2
 
-    @property
-    def inertia(self):
-        try:
-            return self._inertia
-        except AttributeError:
-            self._inertia = self.mass * self.radius ** 2 / 2
-            return self._inertia
-
-    @inertia.setter
-    def inertia(self, value):
-        self._inertia = value
+    @lazy
+    def ROG_sqr(self):
+        return self._radius ** 2 / 2
 
     @property
     def radius(self):
@@ -54,27 +47,17 @@ class Circle(LinearObject):
         self._radius = value
 
         # Atualiza a caixa de contorno
-        x, y = self.pos_cm
-        self.xmin = x - value
-        self.xmax = x + value
-        self.ymin = y - value
-        self.ymax = y + value
+        x, y = self._pos_cm
+        self._xmin = x - value
+        self._xmax = x + value
+        self._ymin = y - value
+        self._ymax = y + value
 
     def scale(self, scale, update_physics=False):
         self.radius *= scale
         if update_physics:
-            self.mass /= scale ** 2
-            self.intertia /= scale ** 2
-
-    def adjust_superposition(self, other, dt):
-        if not isinstance(other, Circle):
-            return NotImplemented
-
-        delta = other.pos_cm - self.pos_cm
-        u = delta.normalized()
-        D = self.radius + other.radius - delta.norm()
-        self.move(-D / 2 * u)
-        other.move(D / 2 * u)
+            self.mass *= scale ** 2
+            self.inertia *= scale ** 2
 
 #===============================================================================
 # Implementa colisões
@@ -94,19 +77,5 @@ def circle_collision(A, B):
 
 
 if __name__ == '__main__':
-    from FGAme import World, Runner
-
-    C1 = Circle(radius=20, vel_cm=(0, 100))
-    C2 = Circle(radius=35, pos_cm=(30, 40))
-    col = get_collision(C1, C2)
-    print(col)
-    print(col.get_impulse())
-    print(col.normal)
-    print(col.objects)
-    print(col.pos)
-
-    world = World()
-    world.add_object(C1)
-    world.add_object(C2)
-    runner = Runner(world)
-    runner.run()
+    from doctest import testmod
+    testmod()

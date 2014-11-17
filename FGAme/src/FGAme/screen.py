@@ -1,5 +1,5 @@
-# -*- coding: utf8 -*-
-from mathutils import Vector2D
+#-*- coding: utf8 -*-
+from mathutils import Vector
 from math import trunc
 
 class Screen(object):
@@ -8,7 +8,7 @@ class Screen(object):
     def __init__(self, width, height, pos=(0, 0), zoom=1, background=(255, 255, 255)):
         self.width = width
         self.height = height
-        self.pos = Vector2D(*pos)
+        self.pos = Vector(*pos)
         self.zoom = zoom
         self.background = background
 

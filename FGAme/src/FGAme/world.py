@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+#-*- coding: utf8 -*-
 from __future__ import print_function
 from screen import PyGameScreen as Screen
 from mathutils import *
@@ -6,17 +6,21 @@ from objects import AABB, Circle, Poly
 from collision import get_collision, get_collision_aabb, CollisionError
 from utils import shadow_y
 
+from listener import PyGameListener, Listener, InputListener
+
+
 #===============================================================================
 # Classe Mundo -- coordena todos os objetos com uma física definida e resolve a
 # interação entre eles
 #===============================================================================
-class World(object):
+class World(Listener):
     '''Documente-me!
     '''
 
     def __init__(self, background=None,
-                 gravity=None, alpha=0, beta=0,
-                 rest_coeff=1, sfriction=0, dfriction=0, stop_velocity=1e-6):
+                 gravity=None, damping=0, adamping=0,
+                 rest_coeff=1, sfriction=0, dfriction=0, stop_velocity=1e-6,
+                 skip_draw=None, skip_physics=None):
 
         if background is not None:
             background = tuple(background)
@@ -26,14 +30,11 @@ class World(object):
         self._layer_shift = 0
 
         # Inicia a gravidade e as constantes de força dissipativa
-        if isinstance(gravity, (int, float)):
-            self.gravity = Vector2D(0, -gravity)
-        else:
-            self.gravity = Vector2D(*(gravity  or (0, 0)))
+        self.gravity = gravity or (0, 0)
+        self.damping = damping
+        self.adamping = adamping
 
-        # Salva outros parâmetros físicos
-        self.alpha = float(alpha)
-        self.beta = float(beta)
+        # Colisão
         self.rest_coeff = float(rest_coeff)
         self.sfriction = float(sfriction)
         self.dfriction = float(dfriction)
@@ -43,14 +44,58 @@ class World(object):
         self._hard_bounds = None
 
         # Controle de callbacks de colisão
-        self._cb_pair = {}
-        self._cb_object = {}
-        self._cb_unbound = []
+        self._input_listener = PyGameListener()
+
+        self.skip_physics = skip_physics
+        self.skip_draw = skip_draw
+        self.is_paused = False
+
+    #===========================================================================
+    # Propriedades
+    #===========================================================================
+    @property
+    def gravity(self):
+        return self._gravity
+
+    @gravity.setter
+    def gravity(self, value):
+        try:
+            gravity = self._gravity = Vector(*value)
+        except TypeError:
+            gravity = self._gravity = Vector(0, -value)
+
+        for obj in self._objects_col:
+            if not obj.owns_gravity:
+                obj._gravity = gravity
+
+    @property
+    def damping(self):
+        return self._damping
+
+    @damping.setter
+    def damping(self, value):
+        value = self._damping = float(value)
+
+        for obj in self._objects_col:
+            if not obj.owns_damping:
+                obj._damping = value
+
+    @property
+    def adamping(self):
+        return self._adamping
+
+    @adamping.setter
+    def adamping(self, value):
+        value = self._adamping = float(value)
+
+        for obj in self._objects_col:
+            if not obj.owns_adamping:
+                obj._adamping = value
 
     #===========================================================================
     # Gerenciamento de objetos
     #===========================================================================
-    def add_object(self, obj, layer=0, has_collision=True):
+    def add(self, obj, layer=0, has_collision=True):
         '''Adiciona um novo objeto ao mundo.
         
         Exemplos
@@ -58,9 +103,15 @@ class World(object):
         
         >>> obj = AABB((-10, 10, -10, 10))
         >>> world = World()
-        >>> world.add_object(obj, layer=-1)
+        >>> world.add(obj, layer=-1)
         
         '''
+
+        # Verifica se trata-se de uma lista de objetos
+        if not hasattr(obj, 'draw'):
+            for obj in obj:
+                self.add(obj, layer=layer, has_collision=has_collision)
+            return
 
         # Adiciona na lista de renderização
         if layer < 0:
@@ -76,9 +127,16 @@ class World(object):
         # Adiciona na lista de colisões
         if has_collision:
             obj.is_alive = True
+            if not obj.owns_gravity:
+                obj._gravity = self.gravity
+            if not obj.owns_damping:
+                obj._damping = self.damping
+            if not obj.owns_adamping:
+                obj._adamping = self.adamping
+
             self._objects_col.append(obj)
 
-    def remove_object(self, obj):
+    def remove(self, obj):
         '''Descarta um objeto do mundo'''
 
         for i, obj_i in enumerate(self._objects_col):
@@ -89,41 +147,61 @@ class World(object):
         for layer in self._objects_render:
             for i, obj_i in enumerate(layer):
                 if obj is obj_i:
-                    del self._objects_col[i]
-                    break
-            else:
-                continue
-            break
+                    del layer[i]
+                    return
 
-    def clean_objects(self):
-        '''Limpa todos os objetos que foram marcados para destruição'''
+    #===========================================================================
+    # Event control
+    #===========================================================================
+    EVENTS = InputListener.EVENTS.copy()
+    EVENTS.update({
+        'collision': (0, 1),
+        'collision-pair': (2, 1),
+        'frame-enter': (0, 0),
+    })
 
-        # TODO: remover da lista de desenho
-        del_list = [ idx for idx, obj in enumerate(self.objects) if not obj.is_alive ]
-
-    def register_collision_callback(self, cb, *objects):
-        '''Registra uma função de callback para quando ocorre a colisão com um
-        determinado objeto ou par de objetos.
-        
-        O callback fornecido é uma função que recebe um objeto de colisão como 
-        único argumento.'''
-
-        if len(objects) == 0:
-            self._cb_unbound.append(cb)
-        elif len(objects) == 1:
-            self._cb_object[objects[0]] = cb
-        elif len(objects) == 2:
-            obj1, obj2 = objects
-            self._cb_pair[obj1, obj2] = self._cb_pair[obj2, obj1] = cb
+    def _listen_long_press(self, key, cb_func=None, args=None, kwargs=None):
+        if cb_func:
+            self._input_listener.listen('long-press', key, cb_func, args, kwargs)
         else:
-            raise ValueError('only 0, 1 or 2 objects are necessary')
+            return self._input_listener.listen('long-press', key)
+
+    def _listen_key_up(self, key, cb_func=None, args=None, kwargs=None):
+        if cb_func:
+            self._input_listener.listen('key-up', key, cb_func, args, kwargs)
+        else:
+            return self._input_listener.listen('key-up', key)
+
+    def _listen_key_down(self, key, cb_func=None, args=None, kwargs=None):
+        if cb_func:
+            self._input_listener.listen('key-down', key, cb_func, args, kwargs)
+        else:
+            return self._input_listener.listen('key-down', key)
 
     #===========================================================================
     # Simulação de Física
     #===========================================================================
+    def pause(self):
+        '''Pausa a simulação de física'''
+
+        self.is_paused = True
+
+    def unpause(self):
+        '''Resume a simulação de física'''
+
+        self.is_paused = False
+
+    def toggle_pause(self):
+        '''Alterna entre o estado de pausa da simulação'''
+
+        self.is_paused = not self.is_paused
+
     def update(self, dt):
         '''Rotina principal da simulação de física.'''
 
+        if self.is_paused:
+            return
+        self.trigger('frame-enter')
         self.resolve_forces(dt)
         self.pre_update(dt)
         collisions = self.detect_collisions(dt)
@@ -144,8 +222,9 @@ class World(object):
         # Chama a pre-atualização de cada objeto
         t = self.time
         for obj in self._objects_col:
-            obj.pre_update(t, dt)
-            obj.is_colliding = False
+            # obj.pre_update(t, dt)
+            # obj.is_colliding = False
+            pass
 
     def post_update(self, dt):
         '''Executa a rotina de pós-atualização em todos os objetos. 
@@ -155,7 +234,8 @@ class World(object):
 
         t = self.time
         for obj in self._objects_col:
-            obj.post_update(t, dt)
+            # obj.post_update(t, dt)
+            pass
 
     def detect_collisions(self, dt):
         '''Retorna uma lista com todas as colisões atuais.
@@ -180,9 +260,8 @@ class World(object):
                 if B.xmin > xmax:
                     break
 
-                # Não detecta colisão entre dois objetos estáticos
-                if ((A.can_move_linear == B.can_move_linear == False) and
-                    (A.can_move_angular == B.can_move_angular == False)):
+                # Não detecta colisão entre dois objetos estáticos/cinemáticos
+                if A._invmass == A._invinertia == B._invmass == B._invinertia == 0:
                     continue
 
                 # Somente testa as colisões positivas por AABB
@@ -195,6 +274,8 @@ class World(object):
                 if col is not None:
                     col.world = self
                     collisions.append(col)
+                    A.trigger('collision', col)
+                    B.trigger('collision', col)
 
         return collisions
 
@@ -207,25 +288,25 @@ class World(object):
     def broadcast_collisions(self, collisions, dt):
         '''Anuncia todas as colisões para os objetos envolvidos'''
 
-        if self._cb_object or self._cb_pair or self._cb_unbound:
-            for col in collisions:
-                # Recupera os objetos que participam da colisão
-                A, B = pair = col.objects
-
-                # Executa todos os callbacks do _cb_unbound
-                for cb in self._cb_unbound:
-                    cb(col)
-
-                # Executa o callback se A ou B estiverem registrados como
-                # callback simples
-                for obj, cb in self._cb_object.items():
-                    if obj is A or obj is B:
-                        cb(col)
-
-                # Executa um callback registrado para o par de objetos
-                if pair in self._cb_pair:
-                    self._cb_pair[pair](col)
-
+#         if self._cb_object or self._cb_pair or self._cb_unbound:
+#             for col in collisions:
+#                 # Recupera os objetos que participam da colisão
+#                 A, B = pair = col.objects
+#
+#                 # Executa todos os callbacks do _cb_unbound
+#                 for cb in self._cb_unbound:
+#                     cb(col)
+#
+#                 # Executa o callback se A ou B estiverem registrados como
+#                 # callback simples
+#                 for obj, cb in self._cb_object.items():
+#                     if obj is A or obj is B:
+#                         cb(col)
+#
+#                 # Executa um callback registrado para o par de objetos
+#                 if pair in self._cb_pair:
+#                     self._cb_pair[pair](col)
+#
         return collisions
 
     def get_collision(self, A, B):
@@ -264,26 +345,23 @@ class World(object):
     def resolve_forces(self, dt):
         '''Resolve a dinâmica de forças durante o intervalo dt'''
 
-        gaccel = self.gravity
-        alpha = self.alpha
-        beta = self.beta
         t = self.time
 
         for obj in self._objects_col:
-            if obj.can_move_linear:
-                F = obj.external_force(t)
-                mass = obj.mass
-                if gaccel:
-                    F += gaccel * mass
-                if alpha:
-                    F += (-alpha * mass) * obj.vel_cm
+            if obj._invmass:
+                F = obj.global_force()
+                F += obj.external_force(t) or (0, 0)
                 obj.apply_force(F, dt)
-            if obj.can_move_angular:
-                tau = obj.external_torque(t)
-                if beta:
-                    I = obj.inertia
-                    tau += -beta * I * obj.omega_cm
+            elif obj._vel_cm.x or obj._vel_cm.y:
+                obj.move(obj._vel_cm * dt)
+
+            if obj._invinertia:
+                tau = obj.global_torque()
+                tau += obj.external_torque(t) or 0
                 obj.apply_torque(tau, dt)
+            elif obj._omega_cm:
+                obj.rotate(obj._omega_cm * dt)
+
 
     #===========================================================================
     # Cálculo de parâmetros físicos
@@ -306,6 +384,37 @@ class World(object):
                 obj.draw_ticks(screen)
 
     #===========================================================================
+    # Laço principal
+    #===========================================================================
+    def run(self, timeout=None, sym_timeout=None):
+        import pygame  # TODO: remove this!
+        from screen import PyGameScreen
+
+        self._stopped = False
+        screen = PyGameScreen(800, 600)
+        clock = pygame.time.Clock()
+
+        while not self._stopped:
+            self._input_listener.step()
+            screen.clear((255, 255, 255))
+
+            # Atualiza a física
+            dt = 1. / 60
+            self.update(dt)
+
+            # Desenha objetos
+            self.draw(screen)
+
+            pygame.display.update()
+            clock.tick(60)
+
+    def stop(self):
+        self._stopped = True
+
+    def set_next_state(self, value):
+        pass
+
+    #===========================================================================
     # Criação de objetos especiais
     #===========================================================================
     def make_bounds(self, xmin, xmax, ymin, ymax, hard=True, delta=100, use_poly=False):
@@ -313,17 +422,16 @@ class World(object):
 
         assert xmin < xmax and ymin < ymax, 'invalid bounds'
         maker = Poly.rect if use_poly else AABB
-        down = maker(bbox=(xmin - delta, xmax + delta, ymin - delta, ymin), is_dynamic_linear=False)
-        up = maker(bbox=(xmin - delta, xmax + delta, ymax, ymax + delta), is_dynamic_linear=False)
-        left = maker(bbox=(xmin - delta, xmin, ymin, ymax), is_dynamic_linear=False)
-        right = maker(bbox=(xmax, xmax + delta, ymin, ymax), is_dynamic_linear=False)
-        if use_poly:
-            for box in [up, down, left, right]:
-                box.is_dynamic_angular = False
-        self.add_object(down)
-        self.add_object(up)
-        self.add_object(left)
-        self.add_object(right)
+        up = maker(bbox=(xmin - delta, xmax + delta, ymax, ymax + delta))
+        down = maker(bbox=(xmin - delta, xmax + delta, ymin - delta, ymin))
+        left = maker(bbox=(xmin - delta, xmin, ymin, ymax))
+        right = maker(bbox=(xmax, xmax + delta, ymin, ymax))
+        for box in [up, down, left, right]:
+            box.make_static()
+        self.add(down)
+        self.add(up)
+        self.add(left)
+        self.add(right)
         self._bounds = (left, right, up, down)
         self._hard_bounds = hard
 

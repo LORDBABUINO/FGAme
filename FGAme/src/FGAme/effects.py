@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+#-*- coding: utf8 -*-
 from random import shuffle, random
 from math import sqrt
 from objects import Poly
