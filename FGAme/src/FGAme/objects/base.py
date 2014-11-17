@@ -17,7 +17,6 @@ if __name__ == '__main__':
     __package__ = 'FGAme.objects'; import FGAme.objects
 
 from math import pi
-import pygame
 from copy import copy
 from ..mathutils import *
 from ..utils import *
@@ -403,7 +402,7 @@ class Object(Listener):
     def aboost(self, delta):
         '''Adiciona um valor delta à velocidade ângular'''
 
-        self._omega_cm += delta_omega
+        self._omega_cm += delta
 
     def vpoint(self, pos, relative=False):
         '''Retorna a velocidade linear de um ponto em pos preso rigidamente ao 

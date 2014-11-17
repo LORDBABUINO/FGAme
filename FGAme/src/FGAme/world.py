@@ -1,13 +1,13 @@
 #-*- coding: utf8 -*-
 from __future__ import print_function
-from screen import PyGameScreen as Screen
+
+from backends import get_screen, get_input_listener
 from mathutils import *
 from objects import AABB, Circle, Poly
 from collision import get_collision, get_collision_aabb, CollisionError
 from utils import shadow_y
-
-from listener import PyGameListener, Listener, InputListener
-
+from listener import Listener, InputListener
+import time
 
 #===============================================================================
 # Classe Mundo -- coordena todos os objetos com uma física definida e resolve a
@@ -44,7 +44,7 @@ class World(Listener):
         self._hard_bounds = None
 
         # Controle de callbacks de colisão
-        self._input_listener = PyGameListener()
+        self._input_listener = get_input_listener()
 
         self.skip_physics = skip_physics
         self.skip_draw = skip_draw
@@ -387,26 +387,21 @@ class World(Listener):
     # Laço principal
     #===========================================================================
     def run(self, timeout=None, sym_timeout=None):
-        import pygame  # TODO: remove this!
-        from screen import PyGameScreen
 
+        sleep = time.sleep
+        gettime = time.time
+        dt = 1. / 60
         self._stopped = False
-        screen = PyGameScreen(800, 600)
-        clock = pygame.time.Clock()
+        screen = get_screen()
 
         while not self._stopped:
+            t0 = gettime()
             self._input_listener.step()
-            screen.clear((255, 255, 255))
-
-            # Atualiza a física
-            dt = 1. / 60
             self.update(dt)
-
-            # Desenha objetos
+            screen.clear((255, 255, 255))
             self.draw(screen)
-
-            pygame.display.update()
-            clock.tick(60)
+            screen.show()
+            sleep(max(dt - (gettime() - t0), 0))
 
     def stop(self):
         self._stopped = True

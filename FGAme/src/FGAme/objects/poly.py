@@ -3,7 +3,6 @@ from __future__ import absolute_import
 if __name__ == '__main__':
     __package__ = 'FGAme.objects'; import FGAme.objects
 
-import pygame
 from math import trunc, sin
 from .base import Object
 from .aabb import AABB

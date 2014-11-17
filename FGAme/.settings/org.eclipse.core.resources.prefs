@@ -1,6 +1,10 @@
 eclipse.preferences.version=1
 encoding//doc/source/conf.py=utf-8
 encoding//src/FGAme/__init__.py=utf8
+encoding//src/FGAme/backends/core.py=utf8
+encoding//src/FGAme/backends/pygame_be.py=utf8
+encoding//src/FGAme/backends/pygamegfx_be.py=utf8
+encoding//src/FGAme/backends/sdl2_be.py=utf8
 encoding//src/FGAme/collision.py=utf8
 encoding//src/FGAme/effects.py=utf8
 encoding//src/FGAme/exemplos/aabb_friction.py=utf8
