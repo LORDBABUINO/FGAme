@@ -1,7 +1,7 @@
 #-*- coding: utf8 -*-
-from mathutils import *
-from multidispatch import multifunction
-from utils import shadow_x, shadow_y
+from FGAme.mathutils import *
+from FGAme.multidispatch import multifunction
+from FGAme.utils import shadow_x, shadow_y
 
 #===============================================================================
 # Classe Colisão -- representa uma colisão entre dois objetos.
@@ -35,15 +35,15 @@ class Collision(object):
         vrel = B.vel_cm - A.vel_cm
         J_denom = A._invmass + B._invmass
 
-#         if A._invinertia or A._omega_cm:
-#             x, y = R = pos - A.pos_cm
-#             vrel -= A._omega_cm * Vector(-y, x)
-#             J_denom += cross(R, n) ** 2 * A._invinertia
-#
-#         if B._invinertia or B._omega_cm:
-#             x, y = R = pos - B.pos_cm
-#             vrel += B.omega_cm * Vector(-y, x)
-#             J_denom += cross(R, n) ** 2 * B._invinertia
+        if A._invinertia or A._omega_cm:
+            x, y = R = pos - A.pos_cm
+            vrel -= A._omega_cm * Vector(-y, x)
+            J_denom += cross(R, n) ** 2 * A._invinertia
+
+        if B._invinertia or B._omega_cm:
+            x, y = R = pos - B.pos_cm
+            vrel += B.omega_cm * Vector(-y, x)
+            J_denom += cross(R, n) ** 2 * B._invinertia
 
         # Determina o impulso total
         if not J_denom:

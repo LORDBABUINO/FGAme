@@ -83,6 +83,8 @@ class Vector(object):
         '''x.__div__(y) <==> x / y'''
         return Vector(self._x / other, self._y / other)
 
+    __truediv__ = __div__  # Python 3
+
     def __add__(self, other):
         '''x.__add__(y) <==> x + y'''
         x, y = other
@@ -168,6 +170,8 @@ class VectorM(Vector):
         self._x /= other
         self._y /= other
         return self
+
+    __itruediv__ = __idiv__
 
     def rotate(self, theta, axis=(0, 0)):
         '''Realiza rotação *inplace*'''
@@ -379,6 +383,46 @@ def clip(poly1, poly2):
         # Atualiza ponto inicial da face
         r0 = r1
     return(out)
+
+
+def convex_hull(points):
+    '''Retorna a envoltória convexa do conjunto de pontos fornecidos.
+    
+    Implementa o algorítimo da cadeia monótona de Andrew, O(n log n)
+    
+    Exemplo
+    -------
+    
+    >>> convex_hull([(0, 0), (1, 1), (1, 0), (0, 1), (0.5, 0.5)])
+    [Vector(0, 0), Vector(1, 0), Vector(1, 1), Vector(0, 1)]
+    '''
+
+    # Ordena os pontos pela coordenada x, depois pela coordenada y
+    points = sorted(set(map(tuple, points)))
+    points = [ Vector(*pt) for pt in points ]
+    if len(points) <= 1:
+        return points
+
+    # Cria a lista L: lista com os vértices da parte inferior da envoltória
+    #
+    # Algoritimo: acrescenta os pontos de points em L e a cada novo ponto
+    # remove o último caso não faça uma volta na direção anti-horária
+    L = []
+    for p in points:
+        while len(L) >= 2 and cross(L[-1] - L[-2], p - L[-2]) <= 0:
+            L.pop()
+        L.append(p)
+
+    # Cria a lista U: vértices da parte superior
+    # Semelhante à anterior, mas itera sobre os pontos na ordem inversa
+    U = []
+    for p in reversed(points):
+        while len(U) >= 2 and cross(U[-1] - U[-2], p - U[-2]) <= 0:
+            U.pop()
+        U.append(p)
+
+    # Remove o último ponto de cada lista, pois ele se repete na outra
+    return L[:-1] + U[:-1]
 
 if __name__ == '__main__':
     import doctest

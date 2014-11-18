@@ -6,9 +6,10 @@ if __name__ == '__main__':
 from math import trunc, sin
 from .base import Object
 from .aabb import AABB
-from ..mathutils import Vector, area, ROG_sqr, center_of_mass, dot, cross, pi, clip
+from ..mathutils import Vector, area, ROG_sqr, center_of_mass, dot, cross, pi, clip, VectorM
 from ..utils import lazy
 from ..collision import get_collision, Collision, get_collision_aabb
+from math import cos, sin
 
 class Poly(Object):
     '''Define um polígono arbitrário de N lados.'''
@@ -17,7 +18,7 @@ class Poly(Object):
         if pos_cm is not None:
             raise TypeError('cannot define pos_cm for polygonal shapes')
 
-        self.vertices = [Vector(*pt) for pt in vertices]
+        self.vertices = [VectorM(*pt) for pt in vertices]
         super(Poly, self).__init__(pos_cm=(0, 0), **kwds)
         self._xmin = min(pt.x for pt in self.vertices)
         self._xmax = max(pt.x for pt in self.vertices)
@@ -155,11 +156,21 @@ class Poly(Object):
 
     def move(self, delta):
         super(Poly, self).move(delta)
-        self.vertices = [pt + delta for pt in self.vertices]
+        for v in self.vertices:
+            v += delta
 
     def rotate(self, theta):
         super(Poly, self).rotate(theta)
-        self.vertices = [pt.rotated(theta, self._pos_cm) for pt in self.vertices]
+
+        # Realiza a matriz de rotação manualmente para melhor performance
+        cost, sint = cos(theta), sin(theta)
+        X, Y = self._pos_cm
+        for v in self.vertices:
+            x = v.x - X
+            y = v.y - Y
+            v.x = cost * x - sint * y + X
+            v.y = cost * y + sint * x + Y
+
         self._xmin = min(pt.x for pt in self.vertices)
         self._xmax = max(pt.x for pt in self.vertices)
         self._ymin = min(pt.y for pt in self.vertices)
@@ -168,7 +179,10 @@ class Poly(Object):
     def scale(self, scale, update_physics=False):
         # Atualiza os pontos
         Rcm = self.pos_cm
-        self.vertices = [ scale * (pt - Rcm) + Rcm for pt in self.vertices ]
+        for v in self.vertices:
+            v -= Rcm
+            v *= scale
+            v += Rcm
 
         # Atualiza AABB
         X = [ x for (x, y) in self.vertices ]

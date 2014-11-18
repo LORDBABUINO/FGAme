@@ -26,5 +26,5 @@ Main features:
           'Topic :: Software Development :: Libraries',
           ],
       package_dir={'': 'src'},
-      packages=['FGAme', 'FGAme.objects', 'FGAme.exemplos'],
+      packages=['FGAme', 'FGAme.objects', 'FGAme.backends', 'FGAme.exemplos'],
 )

@@ -4,6 +4,7 @@ from __future__ import print_function
 from FGAme import *
 from random import uniform, choice
 from math import sqrt
+set_backend('pygamegfx')
 
 def random_color():
     return tuple(int(uniform(0, 255)) for i in range(3))
@@ -25,7 +26,7 @@ class Scenario:
         width = 200
         pos = Vector(250, -110)
         shape = (width, height)
-        p = Poly.rect(pos_cm=pos, shape=shape, color=(158, 86, 38))
+        p = Poly.rect(pos_cm=pos, shape=shape, color=(158, 86, 38), centered=True)
         p.is_dynamic = False
         yield p
 
@@ -37,7 +38,7 @@ class Scenario:
             deltax = uniform(-shapeX / 6., shapeX / 6.)
             pos = pos + (deltax, deltay)
             shape = (width, height)
-            yield Poly.rect(pos_cm=pos, shape=shape, color=(158, 86, 38))
+            yield Poly.rect(pos_cm=pos, shape=shape, color=(158, 86, 38), centered=True)
 
     def get_objects(self):
         yield self.floor()

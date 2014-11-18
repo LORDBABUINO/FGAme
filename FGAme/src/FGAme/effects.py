@@ -1,7 +1,7 @@
 #-*- coding: utf8 -*-
 from random import shuffle, random
 from math import sqrt
-from objects import Poly
+from FGAme.objects import Poly
 
 def explode(obj, world, energy=0, prob_rec=0.5):
     world.remove_object(obj)

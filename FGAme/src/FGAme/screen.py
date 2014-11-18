@@ -1,5 +1,5 @@
 #-*- coding: utf8 -*-
-from mathutils import Vector
+from FGAme.mathutils import Vector
 from math import trunc
 
 class Screen(object):

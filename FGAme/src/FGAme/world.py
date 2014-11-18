@@ -1,12 +1,12 @@
 #-*- coding: utf8 -*-
 from __future__ import print_function
 
-from backends import get_screen, get_input_listener
-from mathutils import *
-from objects import AABB, Circle, Poly
-from collision import get_collision, get_collision_aabb, CollisionError
-from utils import shadow_y
-from listener import Listener, InputListener
+from FGAme.backends import get_screen, get_input_listener
+from FGAme.mathutils import *
+from FGAme.objects import AABB, Circle, Poly
+from FGAme.collision import get_collision, get_collision_aabb, CollisionError
+from FGAme.utils import shadow_y
+from FGAme.listener import Listener, InputListener
 import time
 
 #===============================================================================

@@ -80,27 +80,7 @@ class AABB(LinearObject):
         self._pos_cm.y = (self._ymax - self._ymin) / 2
 
 
-
-
 #===============================================================================
 # Implementa colisões
 #===============================================================================
 get_collision[AABB, AABB] = get_collision_aabb
-
-
-if __name__ == '__main__':
-    from FGAme import World
-
-    C1 = AABB(shape=(40, 40), vel_cm=(0, 20))
-    C2 = AABB(shape=(60, 60), pos_cm=(30, 40))
-    col = get_collision(C1, C2)
-    print(col)
-    print(col.get_impulse())
-    print(col.normal)
-    print(col.objects)
-    print(col.pos)
-
-    world = World()
-    world.add(C1)
-    world.add(C2)
-    world.run()

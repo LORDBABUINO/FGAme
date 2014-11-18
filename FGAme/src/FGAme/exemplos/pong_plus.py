@@ -3,33 +3,53 @@ from FGAme import *
 from random import uniform, choice, random
 from math import pi
 
-class Pong:
+class Pong(World):
     def __init__(self, **kwds):
-        self.ball = self.make_ball()
-        self.pong = self.make_pong()
-        self.time_bar = self.make_time_bar()
-        self.world = self.make_world()
-        self.world.add(self.pong)
-        self.world.add(self.ball)
-        self.world.add(self.time_bar, layer=1, has_collision=False)
-        self.pong_x = self.pong.pos_cm.x
-        self.hits = 0
+        # Inicializa o mundo
+        H, W = self.screen_height / 2, self.screen_width / 2
+        super(Pong, self).__init__(rest_coeff=0.9, gravity=self.gravity)
+        self.make_bounds(-W + 10, 2 * W, -H + 10, H - 10, delta=400)
+        self.listen('frame-enter', self.check_fail)
+        self.listen('frame-enter', self.update_time)
+        self.listen('frame-enter', self.accelerate_ball)
+        self.listen('long-press', 'up', self.move_up)
+        self.listen('long-press', 'down', self.move_down)
 
-        # Adiciona objetos extra
-        self.stray = []
-        for i in range(self.stray_N):
-            new = self.make_stray()
-            self.stray.append(new)
-            self.world.add(new)
+        # Cria a raquete
+        Y = self.pong_height
+        X = self.pong_width
+        self.pong = pong = Poly([(0, 0), (0, Y), (-X / 3, Y),
+                                 (-X, 0.66 * Y), (-X, 0.33 * Y), (-X / 3, 0)])
+        pong.make_static('angular')
+        pong.move((350, -Y / 2))
+        pong.listen('collision', self.pong_collision)
+        pong.external_force = \
+            lambda t:-10000 * Vector(pong.pos_cm.x - self.pong_x, 0)
+        pong.damping = 3
+        self.pong_x = self.pong.pos_cm.x
+
+        # Cria a barra de tempo
+        self.timebar = AABB(shape=(20, 20), pos_cm=(W - 10, -H + 20),
+                            color=(255, 225, 0))
+
+        # Adiciona objetos
+        self.ball = self.new_ball()
+        self.add([self.pong, self.ball])
+        self.add(self.timebar, layer=1, has_collision=False)
+        self.obstacle = []
+        for i in range(self.obstacle_N):
+            new = self.new_obstacle()
+            self.obstacle.append(new)
+            self.add(new)
 
         # Define amplitude de movimento do pong
-        self.max_pong_y = (self.screen_height - self.pong_height - 20) / 2
+        self.max_pong_y = H - self.pong_height / 2 - 10
         self.min_pong_y = -self.max_pong_y
 
         # Desenha pontos de hit acinzentados
+        self.hits = 0
         for i in range(self.max_hits):
-            hit = self.make_hit_mark(i, self.hits_bg)
-            self.world.add(hit, layer=1, has_collision=False)
+            self.make_hit_mark(i, self.hits_bg)
 
         # Salva parâmetros adicionais
         for k, v in kwds.items():
@@ -55,11 +75,11 @@ class Pong:
 
     # Lógica do jogo
     max_hits = 10
-    stray_N = 20
-    stray_sides = 4
-    stray_size = 30
-    stray_color = (50, 50, 100)
-    stray_dynamic = True
+    obstacle_N = 20
+    obstacle_sides = 4
+    obstacle_size = 30
+    obstacle_color = (50, 50, 100)
+    obstacle_dynamic = True
 
     # Cores
     hits_bg = (150, 150, 150)
@@ -69,33 +89,7 @@ class Pong:
     #===========================================================================
     # Criação e inicialização de objetos
     #===========================================================================
-    def make_world(self):
-        '''Inicializa o mundo'''
-
-        H, W = self.screen_height / 2, self.screen_width / 2
-        world = World(rest_coeff=0.9, dfriction=0.3, gravity=self.gravity)
-        world.make_bounds(-W + 10, 2 * W, -H + 10, H - 10, delta=400)
-        world.listen('frame-enter', self.check_fail)
-        world.listen('frame-enter', self.update_time)
-        world.listen('frame-enter', self.accelerate_ball)
-        world.listen('long-press', 'up', self.move_up)
-        world.listen('long-press', 'down', self.move_down)
-
-        return world
-
-    def make_pong(self):
-        '''Inicializa a raquete'''
-
-        Y = self.pong_height
-        X = self.pong_width
-        pong = Poly([(0, 0), (0, Y), (-X / 3, Y), (-X, 0.66 * Y), (-X, 0.33 * Y), (-X / 3, 0)])
-        pong.move((350, -Y / 2))
-        pong.make_static('angular')
-        pong.listen('collision', self.pong_collision)
-        pong.external_force = lambda t:-15000 * pong.vel_cm - 10000 * Vector(pong.pos_cm.x - self.pong_x, 0)
-        return pong
-
-    def make_ball(self):
+    def new_ball(self):
         '''Inicializa o a bola'''
 
         ball = Poly.regular(self.ball_sides, self.ball_size, color='red', density=1)
@@ -105,16 +99,16 @@ class Pong:
         ball.boost(speed)
         return ball
 
-    def make_stray(self):
+    def new_obstacle(self):
         '''Cria um objeto aleatório que fica no meio da tela'''
 
         # Cria obstáculo
-        obj = Poly.regular(self.stray_sides, self.stray_size,
-                           color=self.stray_color, density=1)
+        obj = Poly.regular(self.obstacle_sides, self.obstacle_size,
+                           color=self.obstacle_color, density=1)
         obj.scale(uniform(0.75, 2))
         obj.rotate(uniform(0, 2 * pi))
         obj.inertia *= self.inertia_multiplier
-        if not self.stray_dynamic:
+        if not self.obstacle_dynamic:
             obj.make_static()
 
         # Define amplitude de movimento para posições aleatórias
@@ -134,13 +128,8 @@ class Pong:
         W, H = self.screen_width / 2, self.screen_height / 2
         pos_x = 2 * self.hit_size - W + 3 * self.hit_size * n_hits + 10
         pos_y = H - 2 * self.hit_size - 10
-        return Circle(self.hit_size, pos_cm=(pos_x, pos_y), color=color)
-
-    def make_time_bar(self):
-        '''Cria uma nova barra de tempo na lateral da tela'''
-
-        H, W = self.screen_height / 2, self.screen_width / 2
-        return AABB(shape=(20, 20), pos_cm=(W - 10, -H + 20), color=(255, 225, 0))
+        hit = Circle(self.hit_size, pos_cm=(pos_x, pos_y), color=color)
+        self.add(hit, layer=1, has_collision=False)
 
     #===========================================================================
     # Callbacks de interação com o usuário
@@ -163,7 +152,7 @@ class Pong:
         '''Atualizado a cada frame para incrementar a barra de contagem do 
         tempo'''
 
-        self.time_bar.ymax = ymax = self.world.time * 20 - self.screen_height / 2 + 20
+        self.timebar.ymax = ymax = self.time * 20 - self.screen_height / 2 + 20
         if ymax > (self.screen_height / 2 - 10):
             self.next()
 
@@ -181,15 +170,15 @@ class Pong:
         if self.ball.pos_cm.x > self.screen_width / 2:
             self.hit_increment()
             self.hit_increment()
-            self.world.remove(self.ball)
-            self.ball = self.make_ball()
-            self.world.add(self.ball)
+            self.remove(self.ball)
+            self.ball = self.new_ball()
+            self.add(self.ball)
 
-        for i, obj in enumerate(self.stray):
+        for i, obj in enumerate(self.obstacle):
             if obj.pos_cm.x > self.screen_width / 2:
                 self.hit_increment()
-                self.world.remove(obj)
-                del self.stray[i]
+                self.remove(obj)
+                del self.obstacle[i]
                 break
 
     def hit_increment(self):
@@ -200,7 +189,6 @@ class Pong:
 
         # Incrementa o número de hits
         hit = self.make_hit_mark(self.hits)
-        self.world.add(hit, layer=1, has_collision=False)
         self.hits += 1
 
     def pong_collision(self, col):
@@ -225,23 +213,15 @@ class Pong:
     def loose(self):
         '''Chamado quando o usuário perde a fase'''
 
-        self.world.stop()
+        self.stop()
         game_over()
 
     def next(self):
         '''Chama a próxima fase'''
 
-        self.world.stop()
+        self.stop()
         new = Pong(**self.next_params)
         new.run()
-
-    #===========================================================================
-    # API
-    #===========================================================================
-    def run(self):
-        '''Inicia o jogo'''
-
-        self.world.run()
 
 def game_over():
     '''Executed when the game finishes'''
