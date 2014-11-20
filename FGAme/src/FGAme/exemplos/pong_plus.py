@@ -14,6 +14,7 @@ class Pong(World):
         self.listen('frame-enter', self.accelerate_ball)
         self.listen('long-press', 'up', self.move_up)
         self.listen('long-press', 'down', self.move_down)
+        self.listen('key-down', 'left', self.move_left)
 
         # Cria a raquete
         Y = self.pong_height
@@ -24,8 +25,8 @@ class Pong(World):
         pong.move((350, -Y / 2))
         pong.listen('collision', self.pong_collision)
         pong.external_force = \
-            lambda t:-10000 * Vector(pong.pos_cm.x - self.pong_x, 0)
-        pong.damping = 3
+            lambda t:-25000 * Vector(pong.pos_cm.x - self.pong_x, 0)
+        pong.damping = 6
         self.pong_x = self.pong.pos_cm.x
 
         # Cria a barra de tempo
@@ -66,7 +67,7 @@ class Pong(World):
     ball_sides = 5
     ball_size = 30
     hit_size = 10
-    pong_step = 5
+    pong_step = 7
     inertia_multiplier = 20
 
     # Velocidades
@@ -74,7 +75,7 @@ class Pong(World):
     max_ball_speed = 500
 
     # Lógica do jogo
-    max_hits = 10
+    max_hits = 12
     obstacle_N = 20
     obstacle_sides = 4
     obstacle_size = 30
@@ -147,6 +148,11 @@ class Pong(World):
         if self.pong.pos_cm.y > self.min_pong_y:
             self.pong.move((0, -self.pong_step))
             self.pong.vel_cm = (0, -400)
+            
+    def move_left(self):
+        '''Executado quando o usuário aperta a seta para o lado'''
+        
+        self.pong.boost((-400, 0))
 
     def update_time(self):
         '''Atualizado a cada frame para incrementar a barra de contagem do 
@@ -161,7 +167,7 @@ class Pong(World):
 
         V = self.ball.vel_cm.norm()
         if V < self.max_ball_speed:
-            V += 5
+            V += 1
             self.ball.vel_cm = self.ball.vel_cm.normalized() * V
 
     def check_fail(self):

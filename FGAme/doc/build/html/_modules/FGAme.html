@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FGAme &mdash; FGAme 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="FGAme 0.1.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">FGAme 0.1.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for FGAme</h1><div class="highlight"><pre>
+<span class="c">#-*- coding: utf8 -*-</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">dsfsd</span>
+
+<span class="sd">========</span>
+<span class="sd">Tutorial</span>
+<span class="sd">========</span>
+
+<span class="sd">Exemplo básico</span>
+<span class="sd">==============</span>
+
+<span class="sd">Este tutorial explica como utilizar a FGAme para a criação de jogos ou</span>
+<span class="sd">simulações de física simples. A FGAme é um motor de jogos com ênfase na</span>
+<span class="sd">simulação de física. Todos os objetos, portanto, possuem propriedades físicas</span>
+<span class="sd">bem definidas como massa, momento de inércia, velocidade, etc. A simulação da</span>
+<span class="sd">física é feita, em grande parte, de modo automático.</span>
+
+<span class="sd">O primeiro passo é definir o palco que os objetos habitarão. Isto pode ser feito</span>
+<span class="sd">criando um objeto da classe World(). </span>
+
+<span class="sd">&gt;&gt;&gt; world = World()</span>
+
+<span class="sd">A partir daí, podemos criar objetos e inserí-los na simulação</span>
+
+<span class="sd">&gt;&gt;&gt; obj1 = Circle(50)</span>
+<span class="sd">&gt;&gt;&gt; obj2 = Circle(50, color=&#39;red&#39;)</span>
+<span class="sd">&gt;&gt;&gt; world.add([obj1, obj2])</span>
+
+<span class="sd">Para modificar as propriedades físicas dos objetos basta modificar diretamente </span>
+<span class="sd">os atributos correspondentes. Para uma lista completa de atributos, consulte</span>
+<span class="sd">o módulo ?Objects.</span>
+
+<span class="sd">&gt;&gt;&gt; obj1.mass = 10</span>
+<span class="sd">&gt;&gt;&gt; obj2.mass = 20</span>
+<span class="sd">&gt;&gt;&gt; obj1.pos_cm = (150, 50)</span>
+<span class="sd">&gt;&gt;&gt; obj1.vel_cm = (-100, 0)</span>
+
+<span class="sd">As variáveis dinâmicas podem ser modificadas diretamente, mas sempre que</span>
+<span class="sd">possível, devemos utilizar os  métodos que realizam os deslocamentos relativos</span>
+<span class="sd">(ex.: .move(), .boost(), etc). Estes métodos são mais eficientes.</span>
+
+<span class="sd">+----------+-----------+---------------+-------------------------------+---------+</span>
+<span class="sd">| Variável | Escrita   | Deslocamentos | Descrição                     | Unidade |</span>
+<span class="sd">+==========+===========+===============+===============================+=========+</span>
+<span class="sd">| pos_cm   | set_pos   | move          | Posição do centro de massa    | px      |</span>
+<span class="sd">+----------+-----------+---------------+-------------------------------+---------+</span>
+<span class="sd">| vel_cm   | set_vel   | boost         | Velocidade do centro de massa | px/s    |</span>
+<span class="sd">+----------+-----------+---------------+-------------------------------+---------+</span>
+<span class="sd">| theta_cm | set_theta | rotate        | Ângulo de rotação             | rad     |</span>
+<span class="sd">+----------+-----------+---------------+-------------------------------+---------+</span>
+<span class="sd">| omega_cm | set_omega | aboost        | Velocidade angular            | rad/s   |</span>
+<span class="sd">+----------+-----------+---------------+-------------------------------+---------+</span>
+
+<span class="sd">Aplicamos uma operação de `.move()` e movê-lo com relação à posição anterior.</span>
+<span class="sd">Veja como fica a posiição final do objeto.</span>
+
+<span class="sd">&gt;&gt;&gt; obj1.move((150, 0)) # deslocamento com relação à posição inicial</span>
+<span class="sd">&gt;&gt;&gt; obj1.pos_cm</span>
+<span class="sd">Vector(300, 50)</span>
+
+<span class="sd">Para iniciar a simulação, basta chamar o comando</span>
+
+<span class="sd">&gt;&gt;&gt; world.run() # doctest: +SKIP</span>
+<span class="sd">    </span>
+
+<span class="sd">Objetos dinâmicos</span>
+<span class="sd">=================</span>
+
+<span class="sd">Apesar do FGAme não fazer uma distinção explícita durante a criação, os objetos</span>
+<span class="sd">no mundo podem ser do tipo dinâmicos, cinemáticos ou estáticos. Todos eles</span>
+<span class="sd">participam das colisões normalmente, mas a resposta física pode ser diferente em</span>
+<span class="sd">cada caso. Os objetos dinâmicos se movimentam na tela e respondem às forças</span>
+<span class="sd">externas e de colisão. Os objetos cinemáticos se movimentam (usualmente em</span>
+<span class="sd">movimento retilíneo uniforme), mas não sofrem a ação de nenhuma força. Já os</span>
+<span class="sd">objetos estáticos permanecem parados e não respondem a forças.</span>
+
+<span class="sd">A diferenciação é feita apenas pelo valor das massas e das velocidades. </span>
+<span class="sd">Convertemos um objeto em cinemático atribuindo um valor infinito para a massa. </span>
+<span class="sd">Um objeto será estático se tanto a massa quanto a velocidade forem nulas.</span>
+
+<span class="sd">&gt;&gt;&gt; obj2.mass = &#39;inf&#39; # automaticamente se torna estático pois a velocidade é nula</span>
+
+<span class="sd">O FGAme utiliza esta informação para acelerar os cálculos de detecção de colisão</span>
+<span class="sd">e resolução de forças. As propriedades dinâmicas/estáticas dos objetos, no </span>
+<span class="sd">entanto são inteiramente transparentes ao usuário.</span>
+
+<span class="sd">Vale observar que a condição de dinâmico vs. estático pode ser atribuída </span>
+<span class="sd">independentemente para as variáveis lineares e angulares. No segundo caso, o </span>
+<span class="sd">controle é feito pelo valor do momento de inércia no atributo `.inertia` do </span>
+<span class="sd">objeto. Para transformar um objeto dinâmico em inteiramente estático, seria </span>
+<span class="sd">necessário fazer a sequência de operações</span>
+
+<span class="sd">&gt;&gt;&gt; obj2.mass = &#39;inf&#39;</span>
+<span class="sd">&gt;&gt;&gt; obj2.inertia = &#39;inf&#39;</span>
+<span class="sd">&gt;&gt;&gt; obj2.vel_cm *= 0</span>
+<span class="sd">&gt;&gt;&gt; obj2.omega_cm *= 0</span>
+
+<span class="sd">De modo mais simples, podemos fazer todas as operações de uma vez utilizando os</span>
+<span class="sd">métodos `.make_static()` (ou kinematic/dynamic) para controlar as propriedades</span>
+<span class="sd">dinâmicas do objeto.</span>
+
+<span class="sd">&gt;&gt;&gt; obj2.make_static()</span>
+
+<span class="sd">Já os métodos `.is_static()` (ou kinematic/dynamic) permitem investigar se um</span>
+<span class="sd">determinado objeto satisfaz a alugma destas propriedades.</span>
+
+<span class="sd">&gt;&gt;&gt; obj2.is_dynamic()</span>
+<span class="sd">False</span>
+<span class="sd">&gt;&gt;&gt; obj2.is_static()</span>
+<span class="sd">True</span>
+
+<span class="sd">Lembramos que as colisões são calculadas apenas se um dos objetos envolvidos for</span>
+<span class="sd">dinâmico. Deste modo, quando dois objetos cinemáticos ou um objeto estático</span>
+<span class="sd">e um cinemático se encontram, nenhuma força é aplicada e eles simplemente </span>
+<span class="sd">atravessam um pelo outro. </span>
+
+<span class="sd">Forças básicas</span>
+<span class="sd">==============</span>
+
+<span class="sd">Além das forças arbitrárias que podem atuar em qualquer objeto e dos impulsos</span>
+<span class="sd">associados às colisões, existem algumas forças que podem ser definidas </span>
+<span class="sd">globalmente no objeto World(). Trata-se da força da gravidade e das forças </span>
+<span class="sd">viscosas para as velocidades lineares e angulares. </span>
+
+<span class="sd">Na realidade, não definimos as forças diretamente, mas sim as acelerações que</span>
+<span class="sd">elas provocam em cada objeto. São as constantes `gravity`, `damping` e</span>
+<span class="sd">`adamping`. As forças são criadas a partir da fórmula</span>
+<span class="sd">    </span>
+<span class="sd">    F = obj.mass * (gravity - obj.vel_cm * damping)</span>
+<span class="sd">    </span>
+<span class="sd">E o torque é gerado por</span>
+
+<span class="sd">    tau = -obj.inertia * adamping *  obj.omega_cm</span>
+<span class="sd">    </span>
+<span class="sd">Estas constantes podem ser definidas globalmente no objeto mundo ou</span>
+<span class="sd">individualmente. Deste modo, é possível que algum objeto possua uma gravidade</span>
+<span class="sd">diferente do resto do mundo. O mesmo se aplica às forças de amortecimento.</span>
+<span class="sd"> </span>
+<span class="sd">&gt;&gt;&gt; world.gravity = (0, -50)</span>
+<span class="sd">&gt;&gt;&gt; world.adamping = 0.1</span>
+
+<span class="sd">Todos objetos que não definirem explicitamente o valor destas constantes</span>
+<span class="sd">assumirão os valores definidos no mundo no qual estão inseridos. Acrescentamos</span>
+<span class="sd">um terceiro objeto com um valor de gravidade diferente do resto do mundo, para</span>
+<span class="sd">demonstrar este conceito.</span>
+
+<span class="sd">&gt;&gt;&gt; obj3 = Circle(20, (0, -100), gravity=(20, 50), world=world, color=&#39;blue&#39;)</span>
+
+<span class="sd">(Obs.: se o parâmetro world for fornecido, o objeto é adicionado </span>
+<span class="sd">automaticamente durante a criação) </span>
+
+<span class="sd">Interação com o usuário</span>
+<span class="sd">=======================</span>
+
+<span class="sd">Até agora vimos apenas como controlar os parâmetros de simulação física. É</span>
+<span class="sd">lógico que em um jogo deve ser existir alguma forma de interação com o usuário.</span>
+<span class="sd">Na FGAme, esta interação é controlada a partir da noção de eventos e callbacks.</span>
+<span class="sd">É possível registrar funções que são acionadas sempre que um determinado evento</span>
+<span class="sd">acontecer. Eventos podem ser disparados pelo usuário (ex.: apertar uma tecla),</span>
+<span class="sd">ou pela simulação (ex.: ocorrência de uma colisão).</span>
+
+<span class="sd">Digamos que a simulação deva pausar ou despausar sempre que a tecla de espaço </span>
+<span class="sd">for apertada. Neste caso, devemos ligar o evento &quot;apertou a tecla espaço&quot; </span>
+<span class="sd">com a função `.toggle_pause()` do mundo, que alterna o estado de pausa da </span>
+<span class="sd">simulação.</span>
+
+<span class="sd">&gt;&gt;&gt; world.listen(&#39;key-down&#39;, &#39;space&#39;, world.toggle_pause)</span>
+
+<span class="sd">A tabela abaixo mostra os eventos mais comuns e a assinatura das funções de </span>
+<span class="sd">callback</span>
+
+<span class="sd">+----------------+-------------+---------------------------------------------------+</span>
+<span class="sd">| Evento         | Argumento   | Descrição                                         |</span>
+<span class="sd">+================+=============+===================================================+</span>
+<span class="sd">| key-down       | tecla       | Chamado no frame que uma tecla é pressionada.     | </span>
+<span class="sd">|                |             | O argumento pode ser um objeto &#39;tecla&#39;, que       |</span>
+<span class="sd">|                |             | depende do back end utilizado ou uma string,      |</span>
+<span class="sd">|                |             | que é portável para todos back ends.              |</span>
+<span class="sd">|                |             |                                                   |</span>
+<span class="sd">|                |             | A string corresponde à tecla escolhida. Teclas    |</span>
+<span class="sd">|                |             | especiais podem ser acessadas pelos seus nomes    |</span>
+<span class="sd">|                |             | como em &#39;space&#39;, &#39;up&#39;, &#39;down&#39;, etc.               |</span>
+<span class="sd">|                |             |                                                   |</span>
+<span class="sd">|                |             | Os callbacks do tipo &#39;key-down&#39; são funções que   |</span>
+<span class="sd">|                |             | não recebem nenhum argumento.                     |</span>
+<span class="sd">+----------------+-------------+---------------------------------------------------+</span>
+<span class="sd">| key-up         | tecla       | Como em &#39;key-down&#39;, mas é executado no frame em   |</span>
+<span class="sd">|                |             | que a tecla é liberada pelo usuário.              |</span>
+<span class="sd">+----------------+-------------+---------------------------------------------------+</span>
+<span class="sd">| long-press     | tecla       | Semelhante aos anteriores, mas é executado em     |</span>
+<span class="sd">|                |             | *todos* os frames em que a tecla se mantiver      |</span>
+<span class="sd">|                |             | pressionada.                                      |</span>
+<span class="sd">+----------------+-------------+---------------------------------------------------+</span>
+<span class="sd">| mouse-motion   | nenhum      | Executado sempre que o ponteiro do mouse estiver  |</span>
+<span class="sd">|                |             | presente na tela.                                 |</span>
+<span class="sd">|                |             |                                                   |</span>
+<span class="sd">|                |             | O callback é uma função que recebe um vetor com a |</span>
+<span class="sd">|                |             | posição do mouse como primeiro argumento.         |</span>
+<span class="sd">+----------------+-------------+---------------------------------------------------+</span>
+<span class="sd">| mouse-click    | botão       | Como &#39;mouse-motion&#39;, mas só é executada após o    | </span>
+<span class="sd">|                |             | clique. Deve ser registrada com &#39;left&#39;, &#39;right&#39;   |</span>
+<span class="sd">|                |             | &#39;middle&#39; correspondendo a um dos 3 tipos de botão |</span>
+<span class="sd">|                |             | do mouse.                                         |</span>
+<span class="sd">|                |             |                                                   |</span>
+<span class="sd">|                |             | O callback recebe apeans a posição do ponteiro    |</span>
+<span class="sd">|                |             | como primeiro argumento.                          |</span>
+<span class="sd">+----------------+-------------+---------------------------------------------------+</span>
+
+<span class="sd">Criando uma aplicação</span>
+<span class="sd">=====================</span>
+
+
+<span class="sd">==========</span>
+<span class="sd">Referência</span>
+<span class="sd">==========</span>
+
+<span class="sd">Objetos</span>
+<span class="sd">=======</span>
+
+<span class="sd">.. automodule:: FGAme.objects</span>
+
+
+<span class="sd">Classe mundo e aplicações</span>
+<span class="sd">=========================</span>
+
+<span class="sd">#.. automodule:: FGAme.world</span>
+
+
+<span class="sd">Colisões</span>
+<span class="sd">========</span>
+
+<span class="sd">#.. automodule:: FGAme.collision</span>
+
+
+<span class="sd">Funções matemáticas</span>
+<span class="sd">===================</span>
+
+<span class="sd">#.. automodule:: FGAme.mathutils</span>
+
+
+<span class="sd">Tópicos avançados</span>
+<span class="sd">=================</span>
+
+<span class="sd">Anatomia de uma colisão</span>
+<span class="sd">=======================</span>
+
+
+
+<span class="sd">Loop principal</span>
+<span class="sd">==============</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.world</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.collision</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.objects</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">FGAme 0.1.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Fábio Macêdo Mendes.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

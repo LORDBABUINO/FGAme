@@ -5,6 +5,7 @@ AABB.
 '''
 
 from FGAme import *
+set_backend('pygamegl')
 
 # Cria mundo com coeficiente de atrito global não-nulo
 world = World(dfriction=0.1)

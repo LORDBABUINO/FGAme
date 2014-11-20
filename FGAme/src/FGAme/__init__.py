@@ -206,8 +206,37 @@ callback
 |                |             | como primeiro argumento.                          |
 +----------------+-------------+---------------------------------------------------+
 
-Criando uma aplicação
-=====================
+Simulação simples
+=================
+
+Uma simulação de física pode ser criada facilmente adicionando objetos à uma
+instância daclasse World(). O jeito mais recomendado, no entanto, é criar uma
+subclasse pois isto incentiva o código a ficar mais organizado. No exemplo
+abaixo, montamos um sistema "auto-gravitante" onde as duas massas estão presas
+entre si por molas.
+
+
+>>> class Gravity(World):
+...     def __init__(self):
+...         # Chamamos o __init__ da classe pai
+...         super(Gravity, self).__init__() 
+...
+...         # Criamos dois objetos
+...         A = Circle(20, pos_cm=(100, 0), vel_cm=(100, 300), color='red')
+...         B = Circle(20, pos_cm=(-100, 0), vel_cm=(-100, -300))  
+...         self.A, self.B = A, B
+...         self.add([A, B])
+...
+...         # Definimos a força de interação entre ambos
+...         K = self.K = A.mass
+...         self.A.external_force = lambda t: -K * (A.pos_cm - B.pos_cm)
+...         self.B.external_force = lambda t: -K * (B.pos_cm - A.pos_cm) 
+
+
+Agora que temos uma classe mundo definida, basta iniciá-la com o comando
+
+>>> if __name__ == '__main__':
+...     Gravity().run()
 
 
 ==========
@@ -223,19 +252,19 @@ Objetos
 Classe mundo e aplicações
 =========================
 
-#.. automodule:: FGAme.world
+.. automodule:: FGAme.world
 
 
 Colisões
 ========
 
-#.. automodule:: FGAme.collision
+.. automodule:: FGAme.collision
 
 
 Funções matemáticas
 ===================
 
-#.. automodule:: FGAme.mathutils
+.. automodule:: FGAme.mathutils
 
 
 Tópicos avançados

@@ -36,8 +36,11 @@ class Vector(object):
         Vector(0.6, 0.8)
         '''
 
-        self._x = float(x)
-        self._y = float(y)
+        try:
+            self._x = float(x)
+            self._y = float(y)
+        except TypeError:
+            raise TypeError('invalid arguments: x=%r, y=%r' % (x, y))
 
     def as_tuple(self):
         '''Retorna a representação do vetor como uma tupla'''
@@ -73,7 +76,7 @@ class Vector(object):
 
     def __mul__(self, other):
         '''x.__mul__(y) <==> x * y'''
-        return Vector(self._x * other, self._y * other)
+        return type(self)(self._x * other, self._y * other)
 
     def __rmul__(self, other):
         '''x.__rmul__(y) <==> y * x'''
@@ -81,14 +84,14 @@ class Vector(object):
 
     def __div__(self, other):
         '''x.__div__(y) <==> x / y'''
-        return Vector(self._x / other, self._y / other)
+        return type(self)(self._x / other, self._y / other)
 
     __truediv__ = __div__  # Python 3
 
     def __add__(self, other):
         '''x.__add__(y) <==> x + y'''
         x, y = other
-        return Vector(self._x + x, self._y + y)
+        return type(self)(self._x + x, self._y + y)
 
     def __radd__(self, other):
         '''x.__radd__(y) <==> y + x'''
@@ -97,16 +100,16 @@ class Vector(object):
     def __sub__(self, other):
         '''x.__sub__(y) <==> x - y'''
         x, y = other
-        return Vector(self._x - x, self._y - y)
+        return type(self)(self._x - x, self._y - y)
 
     def __rsub__(self, other):
         '''x.__rsub__(y) <==> y - x'''
         x, y = other
-        return Vector(x - self._x, y - self._y)
+        return type(self)(x - self._x, y - self._y)
 
     def __neg__(self):
         '''x.__neg() <==> -x'''
-        return Vector(-self._x, -self._y)
+        return type(self)(-self._x, -self._y)
 
     def __nonzero__(self):
         return True
@@ -132,7 +135,7 @@ class Vector(object):
 
         x, y = self -axis
         cos_t, sin_t = cos(theta), sin(theta)
-        return Vector(x * cos_t - y * sin_t, x * sin_t + y * cos_t) + axis
+        return type(self)(x * cos_t - y * sin_t, x * sin_t + y * cos_t) + axis
 
     @property
     def x(self): return self._x
@@ -180,6 +183,21 @@ class VectorM(Vector):
         cos_t, sin_t = cos(theta), sin(theta)
         self._x = x * cos_t - y * sin_t + axis[0]
         self._y = x * sin_t + y * cos_t + axis[1]
+
+    def copy_from(self, other):
+        '''Copia as coordenadas x, y do objeto other'''
+
+        try:
+            self._x = other._x
+            self._y = other._y
+        except AttributeError:
+            self._x = other[0]
+            self._y = other[1]
+
+    def copy(self):
+        '''Retorna uma cópia de si mesmo'''
+
+        return VectorM(self._x, self._y)
 
     x = property(Vector.x.fget)
     y = property(Vector.y.fget)

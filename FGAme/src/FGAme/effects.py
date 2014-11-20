@@ -4,7 +4,7 @@ from math import sqrt
 from FGAme.objects import Poly
 
 def explode(obj, world, energy=0, prob_rec=0.5):
-    world.remove_object(obj)
+    world.remove(obj)
     N = obj.num_sides
     new_objects = []
 
@@ -42,14 +42,14 @@ def explode(obj, world, energy=0, prob_rec=0.5):
 
         # Adiciona velocidade de acordo com a velocidade original e com a
         # contribuição de energia
-        new.linear_boost(obj.get_vpoint(new.pos_cm))
+        new.boost(obj.vpoint(new.pos_cm))
 
         # Adiciona objeto ao mundo
-        world.add_object(new)
+        world.add(new)
 
         # Aplica a função recursivamente com uma determinada probabilidade
         if random() < prob_rec and new.area > 10:
             explode(new, world, energies[i], 2.0 * prob_rec / N)
         else:
             delta_speed = sqrt(2.0 * energies[i] / new.mass) * norm
-            new.linear_boost(delta_speed)
+            new.boost(delta_speed)

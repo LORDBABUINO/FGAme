@@ -7,6 +7,7 @@ as partículas cessam o movimento.
 
 from FGAme import *
 from random import uniform, choice
+#set_backend('pygame')
 
 # Inicializa o mundo
 class Gas(World):

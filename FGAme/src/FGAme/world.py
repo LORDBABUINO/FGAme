@@ -1,13 +1,12 @@
 #-*- coding: utf8 -*-
 from __future__ import print_function
 
-from FGAme.backends import get_screen, get_input_listener
 from FGAme.mathutils import *
-from FGAme.objects import AABB, Circle, Poly
+from FGAme.backends import get_mainloop, get_input_listener
+from FGAme.objects import AABB, Poly
 from FGAme.collision import get_collision, get_collision_aabb, CollisionError
 from FGAme.utils import shadow_y
 from FGAme.listener import Listener, InputListener
-import time
 
 #===============================================================================
 # Classe Mundo -- coordena todos os objetos com uma física definida e resolve a
@@ -44,11 +43,9 @@ class World(Listener):
         self._hard_bounds = None
 
         # Controle de callbacks de colisão
-        self._input_listener = get_input_listener()
-
-        self.skip_physics = skip_physics
-        self.skip_draw = skip_draw
         self.is_paused = False
+        self._main_loop = get_mainloop()
+        self._input_listener = get_input_listener()
 
     #===========================================================================
     # Propriedades
@@ -209,6 +206,7 @@ class World(Listener):
         self.resolve_collisions(collisions, dt)
         self.post_update(dt)
         self.time += dt
+        return self.time
 
     def pre_update(self, dt):
         '''Executa a rotina de pré-atualização em todos os objetos.
@@ -347,21 +345,27 @@ class World(Listener):
 
         t = self.time
 
+        # Acumula as forças e acelerações
         for obj in self._objects_col:
             if obj._invmass:
-                F = obj.global_force()
+                F = obj._init_frame_force()
                 F += obj.external_force(t) or (0, 0)
-                obj.apply_force(F, dt)
             elif obj._vel_cm.x or obj._vel_cm.y:
                 obj.move(obj._vel_cm * dt)
 
             if obj._invinertia:
                 tau = obj.global_torque()
                 tau += obj.external_torque(t) or 0
-                obj.apply_torque(tau, dt)
+                self._frame_tau = tau
             elif obj._omega_cm:
                 obj.rotate(obj._omega_cm * dt)
 
+        # Applica as forças e acelerações
+        for obj in self._objects_col:
+            if obj._invmass:
+                obj.apply_force(obj._frame_force, dt)
+            if obj._invinertia:
+                obj.apply_torque(obj._frame_tau, dt)
 
     #===========================================================================
     # Cálculo de parâmetros físicos
@@ -388,23 +392,12 @@ class World(Listener):
     #===========================================================================
     def run(self, timeout=None, sym_timeout=None):
 
-        sleep = time.sleep
-        gettime = time.time
-        dt = 1. / 60
-        self._stopped = False
-        screen = get_screen()
-
-        while not self._stopped:
-            t0 = gettime()
-            self._input_listener.step()
-            self.update(dt)
-            screen.clear((255, 255, 255))
-            self.draw(screen)
-            screen.show()
-            sleep(max(dt - (gettime() - t0), 0))
+        self._main_loop.physics_update = self.update
+        self._main_loop.draw = self.draw
+        self._main_loop.run()
 
     def stop(self):
-        self._stopped = True
+        self._main_loop.stop()
 
     def set_next_state(self, value):
         pass

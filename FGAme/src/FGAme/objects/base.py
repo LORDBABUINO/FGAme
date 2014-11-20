@@ -109,6 +109,7 @@ class Object(Listener):
         # Variáveis dinâmicas
         self._pos_cm = VectorM(*(pos_cm or (0, 0)))
         self._vel_cm = VectorM(*(vel_cm or (0, 0)))
+        self._accel_cm = VectorM(0, 0)
         self._omega_cm = float(omega_cm or 0)
         self._theta_cm = 0.0
         if theta_cm is not None:
@@ -138,6 +139,10 @@ class Object(Listener):
         if gravity:
             self.owns_gravity = True
             self._gravity = Vector(*gravity)
+        self._frame_force = VectorM(0, 0)
+        self._frame_accel = VectorM(0, 0)
+        self._frame_tau = 0
+        self._frame_alpha = 0
 
         # Cor/material
         if color is not None: self.color = color
@@ -268,21 +273,15 @@ class Object(Listener):
     # Parâmetros físicos derivados
     @property
     def linearE(self):
-        if self.can_move_linear:
-            return self.mass * dot(self.vel_cm, self.vel_cm) / 2
-        else:
-            return 0
+        return self._mass * dot(self.vel_cm, self.vel_cm) / 2
 
     @property
     def angularE(self):
-        if self.can_move_angular:
-            return self.inertia * self.omega_cm ** 2 / 2
-        else:
-            return 0
+        return self._inertia * self.omega_cm ** 2 / 2
 
     @property
     def kineticE(self):
-        return self.kinetic_energy + self.angular_energy
+        return self.linearE + self.angularE
 
     @property
     def momentumP(self):
@@ -397,7 +396,6 @@ class Object(Listener):
         '''Rotaciona o objeto por um ângulo theta'''
 
         self._theta_cm += theta
-        self._theta_cm %= TWO_PI
 
     def aboost(self, delta):
         '''Adiciona um valor delta à velocidade ângular'''
@@ -413,7 +411,7 @@ class Object(Listener):
         como a posição absoluta no centro de coordenadas do mundo.'''
 
         x, y = pos - self._pos_cm
-        return self._vel_cm + self._omega_cm * Vector2D(-y, x)
+        return self._vel_cm + self._omega_cm * Vector(-y, x)
 
     #===========================================================================
     # Resposta a forças, impulsos e atualização da física
@@ -423,6 +421,47 @@ class Object(Listener):
 
     def global_torque(self):
         return -self._inertia * self._omega_cm * self._adamping
+
+    def global_accel(self):
+        return self._gravity - self._damping * self._vel_cm
+
+    def global_alpha(self):
+        return -self._omega_cm * self._adamping
+
+    def _init_frame_force(self):
+        # Troca aceleração por força
+        try:
+            F = self._frame_force
+            A = self._frame_accel
+            self._frame_accel = F
+
+            # Executa e multiplica pela massa
+            self._init_frame_accel()
+            F *= self._mass
+        finally:
+            # Reverte atributos
+            self._frame_force = F
+            self._frame_accel = A
+        return self._frame_force
+
+    def _init_frame_accel(self):
+        F = self._frame_accel
+        if self._damping:
+            F.copy_from(self._vel_cm)
+            F *= -self._damping
+            if self._gravity is not None:
+                F += self._gravity
+        elif self._gravity is not None:
+            F.copy_from(self._gravity)
+        else:
+            F *= 0
+        return self._frame_accel
+
+    def _init_frame_tau(self):
+        self._frame_tau = -self._inertia * self._omega_cm * self._adamping
+
+    def _init_frame_alpha(self):
+        self._frame_alpha = -self._omega_cm * self._adamping
 
     def external_force(self, t):
         '''Define uma força externa que depende do tempo t.
@@ -445,14 +484,87 @@ class Object(Listener):
     def apply_force(self, force, dt):
         '''Aplica uma força linear durante um intervalo de tempo dt'''
 
-        a = force * self._invmass
-        self.boost(a * dt)
+        self.apply_accel(force * self._invmass, dt)
+
+    def apply_accel(self, a, dt):
+        '''Aplica uma aceleração linear durante um intervalo de tempo dt.
+        
+        Tem efeito em objetos cinemáticos.
+        
+        Observations
+        ------------
+        
+        Implementa a integração de Velocity-Verlet para o sistema. Este
+        integrador é superior ao Euler por dois motivos: primeiro, trata-se de
+        um integrador de ordem superior (O(dt^4) vs O(dt^2)). Além disto, ele possui a
+        propriedade simplética, o que implica que o erro da energia não tende a
+        divergir, mas sim oscilar ora positivamente ora negativamente em torno
+        de zero. Isto é extremamente desejável para simulações de física que
+        parecam realistas.
+        
+        A integração de Euler seria implementada como:
+        
+            x(t + dt) = x(t) + v(t) * dt + a(t) * dt**2 / 2
+            v(t + dt) = v(t) + a(t) * dt
+        
+        Em código Python
+        
+        >>> self.move(self.vel_cm * dt + a * (dt**2/2))
+        >>> self.boost(a * dt)
+        
+        Este método simples e intuitivo sofre com o efeito da "deriva de
+        energia". Devido aos erros de truncamento, o valor da energia da solução
+        numérica flutua com relação ao valor exato. Na grande maioria dos
+        sistemas, esssa flutuação ocorre com mais probabilidade para a região de
+        maior energia e portanto a energia tende a crescer continuamente,
+        estragando a credibilidade da simulação.
+        
+        Velocity-Verlet está numa classe de métodos numéricos que não sofrem com
+        esse problema. A principal desvantagem, no entanto, é que devemos manter
+        uma variável adicional com o último valor conhecido da aceleração. Esta
+        pequena complicação é mais que compensada pelo ganho em precisão
+        numérica. O algorítmo consiste em:
+        
+            x(t + dt) = x(t) + v(t) * dt + a(t) * dt**2 / 2
+            v(t + dt) = v(t) + [(a(t) + a(t + dt)) / 2] * dt 
+
+        O termo a(t + dt) normalemente só pode ser calculado se soubermos como
+        obter as acelerações como função das posições x(t + dt). Na prática,
+        cada iteração de .apply_accel() calcula o valor da posição em  x(t + dt)
+        e da velocidade no passo anterior v(t). Calcular v(t + dt) requer uma
+        avaliação de a(t + dt), que só estará disponível na iteração seguinte.
+        A próxima iteração segue então para calcular v(t + dt) e x(t + 2*dt), e
+        assim sucessivamente.
+        
+        A ordem de acurácia de cada passo do algoritmo Velocity-Verlet é de
+        O(dt^4) para uma força que dependa exclusivamente da posição e tempo.
+        Caso haja dependência na velocidade, a acurácia reduz e ficaríamos
+        sujeitos aos efeitos da deriva de energia. Normalmente as forças físicas
+        que dependem da velocidade são dissipativas e tendem a reduzir a energia
+        total do sistema muito mais rapidamente que a deriva de energia tende a
+        fornecer energia espúria ao sistema. Deste modo, a acurácia ficaria
+        reduzida, mas a simulação ainda manteria alguma credibilidade.
+        '''
+
+        self._accel_cm += a
+        self._accel_cm /= 2
+        self.boost(self._accel_cm * dt)
         self.move(self._vel_cm * dt + a * (dt ** 2 / 2.))
+        self._accel_cm.copy_from(a)
+#        self.move(self._vel_cm * dt + a * dt ** 2 / 2)
+#        self.boost(a * dt)
 
     def apply_torque(self, torque, dt):
-        '''Aplica um torque durante um intervalo de tempo dt'''
+        '''Aplica um torque durante um intervalo de tempo dt.'''
 
-        alpha = torque * self._invinertia
+        self.apply_alpha(torque * self._invinertia, dt)
+
+    def apply_alpha(self, alpha, dt):
+        '''Aplica uma aceleração angular durante um intervalo de tempo dt.
+        
+        Tem efeito em objetos cinemáticos.'''
+
+        dt = dt / 2
         self.aboost(alpha * dt)
         self.rotate(self._omega_cm * dt + alpha * dt ** 2 / 2.)
 
@@ -713,3 +825,4 @@ if __name__ == '__main__':
     from FGAme import *
     import doctest
     doctest.testmod()
+

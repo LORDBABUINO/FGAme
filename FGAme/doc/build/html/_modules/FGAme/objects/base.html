@@ -1,0 +1,772 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FGAme.objects.base &mdash; FGAme 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="FGAme 0.1.1 documentation" href="../../../index.html" />
+    <link rel="up" title="FGAme" href="../../FGAme.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">FGAme 0.1.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../FGAme.html" accesskey="U">FGAme</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for FGAme.objects.base</h1><div class="highlight"><pre>
+<span class="c">#-*- coding: utf8 -*-</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">Modificando o estado físico do objeto</span>
+<span class="sd">-------------------------------------</span>
+
+<span class="sd">.. autoclass :: FGAme.Object</span>
+<span class="sd">.. autoclass :: FGAme.LinearObject</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">__package__</span> <span class="o">=</span> <span class="s">&#39;FGAme.objects&#39;</span><span class="p">;</span> <span class="kn">import</span> <span class="nn">FGAme.objects</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">pygame</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">..mathutils</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">..collision</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">lazy</span>
+<span class="kn">from</span> <span class="nn">..listener</span> <span class="kn">import</span> <span class="n">Listener</span>
+<span class="n">PAUSE_SPEED</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">PAUSE_W_SPEED</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">COLOR_CODES</span> <span class="o">=</span> <span class="p">{</span>
+   <span class="s">&#39;red&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s">&#39;green&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s">&#39;blue&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>
+   <span class="s">&#39;black&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s">&#39;white&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">TWO_PI</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Objetos de colisão -- define a interface básica para a colisão entre 2 objetos</span>
+<span class="c"># Todos os outros objetos devem derivar de PhysicsObject. As colisões entre pares</span>
+<span class="c"># de objetos são implementadas por multidispatch a partir das funções</span>
+<span class="c"># get_collision, avoid_superposition e adjust_superposition no módulo collisions</span>
+<span class="c">#===============================================================================</span>
+<span class="k">class</span> <span class="nc">Object</span><span class="p">(</span><span class="n">Listener</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Classe base para a criação de objetos</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    cte </span>
+<span class="sd">        dsfsdfs</span>
+<span class="sd">    xmin, xmax, ymin, ymax </span>
+<span class="sd">        constantes físicas</span>
+<span class="sd">            </span>
+<span class="sd">    </span>
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    </span>
+<span class="sd">    .. automethod:: set_pos</span>
+<span class="sd">    .. automethod:: set_vel</span>
+<span class="sd">    .. automethod:: set_theta</span>
+<span class="sd">    .. automethod:: set_omega</span>
+<span class="sd">    .. automethod:: move</span>
+<span class="sd">    .. automethod:: boost</span>
+<span class="sd">    .. automethod:: rotate</span>
+<span class="sd">    .. automethod:: aboost</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos_cm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">vel_cm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">theta_cm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">omega_cm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">mass</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">inertia</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">color</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">damping</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">adamping</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">world</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="c"># Variáveis dinâmicas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pos_cm</span> <span class="o">=</span> <span class="n">VectorM</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">pos_cm</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span> <span class="o">=</span> <span class="n">VectorM</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">vel_cm</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">omega_cm</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">theta_cm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">theta_cm</span><span class="p">)</span>
+
+        <span class="c"># Propriedades de inércia</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">density</span> <span class="ow">or</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="n">mass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="n">mass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mass</span>  <span class="c"># computa massa a partir da densidade 1.0</span>
+        <span class="k">if</span> <span class="n">inertia</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">=</span> <span class="n">inertia</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span>  <span class="c"># computa inércia a partir da densidade 1.0</span>
+
+        <span class="c"># Forças globais</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_damping</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_adamping</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gravity</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">damping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">owns_damping</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_damping</span> <span class="o">=</span> <span class="n">damping</span>
+        <span class="k">if</span> <span class="n">adamping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">owns_adamping</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_adamping</span> <span class="o">=</span> <span class="n">adamping</span>
+        <span class="k">if</span> <span class="n">gravity</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">owns_gravity</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gravity</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="o">*</span><span class="n">gravity</span><span class="p">)</span>
+
+        <span class="c"># Cor/material</span>
+        <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+
+        <span class="c"># Marcas para desenho/debug</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_draw_ticks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="c"># Adiciona ao mundo</span>
+        <span class="k">if</span> <span class="n">world</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">world</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="c">#===========================================================================</span>
+    <span class="c">#: Propriedades e constantes físicas</span>
+    <span class="c">#===========================================================================</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Propriedades da caixa de contorno AABB</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ymin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymin</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ymax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymax</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bbox</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymax</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymax</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymin</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymin</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">-</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymax</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Parâmetros físicos</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mass</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mass</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mass</span>
+
+    <span class="nd">@mass.setter</span>
+    <span class="k">def</span> <span class="nf">mass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">value</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mass</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inertia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inertia</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ROG_sqr</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inertia</span>
+
+    <span class="nd">@inertia.setter</span>
+    <span class="k">def</span> <span class="nf">inertia</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inertia</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">value</span>
+
+    <span class="nd">@lazy</span>
+    <span class="k">def</span> <span class="nf">area</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ymax</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ymin</span><span class="p">)</span>
+
+    <span class="nd">@lazy</span>
+    <span class="k">def</span> <span class="nf">ROG_sqr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">a</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">b</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">12</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ROG</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R_sqr</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_density</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Variáveis de estado</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pos_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Vector</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_pos_cm</span><span class="p">)</span>
+
+    <span class="nd">@pos_cm.setter</span>
+    <span class="k">def</span> <span class="nf">pos_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_pos</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">vel_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Vector</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="p">)</span>
+
+    <span class="nd">@vel_cm.setter</span>
+    <span class="k">def</span> <span class="nf">vel_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_vel</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">theta_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span>
+
+    <span class="nd">@theta_cm.setter</span>
+    <span class="k">def</span> <span class="nf">theta_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_theta</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">omega_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span>
+
+    <span class="nd">@omega_cm.setter</span>
+    <span class="k">def</span> <span class="nf">omega_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_omega</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Parâmetros físicos derivados</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">linearE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_move_linear</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">angularE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_move_angular</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega_cm</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">kineticE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kinetic_energy</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">angular_energy</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">momentumP</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">momentumL</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega_cm</span>
+
+    <span class="c">#---------------------------------------------------------------------------</span>
+    <span class="c"># Parâmetros que modificam a resposta física de um objeto às forças externas</span>
+    <span class="c"># e colisões</span>
+    <span class="n">is_alive</span> <span class="o">=</span> <span class="n">is_internal</span> <span class="o">=</span> <span class="n">is_paused</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">owns_gravity</span> <span class="o">=</span> <span class="n">owns_damping</span> <span class="o">=</span> <span class="n">owns_adamping</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">gravity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gravity</span>
+
+    <span class="nd">@gravity.setter</span>
+    <span class="k">def</span> <span class="nf">gravity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gravity</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owns_gravity</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">damping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_damping</span>
+
+    <span class="nd">@damping.setter</span>
+    <span class="k">def</span> <span class="nf">damping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_damping</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owns_damping</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">adamping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adamping</span>
+
+    <span class="nd">@adamping.setter</span>
+    <span class="k">def</span> <span class="nf">adamping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_adamping</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owns_adamping</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">EVENTS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;collision&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_color</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@color.setter</span>
+    <span class="k">def</span> <span class="nf">color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">COLOR_CODES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_color</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Deslocamentos</span>
+    <span class="c">#===========================================================================</span>
+<div class="viewcode-block" id="Object.set_pos"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.set_pos">[docs]</a>    <span class="k">def</span> <span class="nf">set_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Reposiciona o centro de massa do objeto nas coordenadas especificadas </span>
+<span class="sd">        ou na origem.&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_pos_cm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_cm</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Object.set_vel"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.set_vel">[docs]</a>    <span class="k">def</span> <span class="nf">set_vel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Redefine a velocidade linear do centro de massa para o valor </span>
+<span class="sd">        especificado (ou para zero, em caso de omissão).&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">vel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boost</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boost</span><span class="p">(</span><span class="n">vel</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Object.set_theta"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.set_theta">[docs]</a>    <span class="k">def</span> <span class="nf">set_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Reorienta o objeto para o ângulo fornecido ou para a orientação </span>
+<span class="sd">        inicial.&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">theta</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Object.set_omega"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.set_omega">[docs]</a>    <span class="k">def</span> <span class="nf">set_omega</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">omega</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Redefine a velocidade angular do centro de massa para o valor </span>
+<span class="sd">        especificado (ou para zero, em caso de omissão).&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">omega</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aboost</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aboost</span><span class="p">(</span><span class="n">omega</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Object.move"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.move">[docs]</a>    <span class="k">def</span> <span class="nf">move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Move o objeto por vetor de deslocamento delta_r&#39;&#39;&#39;</span>
+
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pos_cm</span> <span class="o">+=</span> <span class="n">delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span> <span class="o">+=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">+=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ymin</span> <span class="o">+=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ymax</span> <span class="o">+=</span> <span class="n">y</span>
+</div>
+<div class="viewcode-block" id="Object.boost"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.boost">[docs]</a>    <span class="k">def</span> <span class="nf">boost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta_vel</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Modifica a velocidade linear por um valor delta_v&#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span> <span class="o">+=</span> <span class="n">delta_vel</span>
+</div>
+<div class="viewcode-block" id="Object.rotate"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.rotate">[docs]</a>    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Rotaciona o objeto por um ângulo theta&#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span> <span class="o">+=</span> <span class="n">theta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span> <span class="o">%=</span> <span class="n">TWO_PI</span>
+</div>
+<div class="viewcode-block" id="Object.aboost"><a class="viewcode-back" href="../../../index.html#FGAme.objects.base.Object.aboost">[docs]</a>    <span class="k">def</span> <span class="nf">aboost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta_omega</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Modifica a velocidade angular por um valor delta_omega&#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span> <span class="o">+=</span> <span class="n">delta_omega</span>
+</div>
+    <span class="k">def</span> <span class="nf">vpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Retorna a velocidade linear de um ponto em pos preso rigidamente ao </span>
+<span class="sd">        objeto.</span>
+<span class="sd">        </span>
+<span class="sd">        Se o parâmetro `relative` for verdadeiro, o vetor `pos` é interpretado</span>
+<span class="sd">        como a posição relativa ao centro de massa. O padrão é considerá-lo</span>
+<span class="sd">        como a posição absoluta no centro de coordenadas do mundo.&#39;&#39;&#39;</span>
+
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_cm</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span> <span class="o">*</span> <span class="n">Vector2D</span><span class="p">(</span><span class="o">-</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Resposta a forças, impulsos e atualização da física</span>
+    <span class="c">#===========================================================================</span>
+    <span class="k">def</span> <span class="nf">global_force</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gravity</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_damping</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">global_torque</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_inertia</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adamping</span>
+
+    <span class="k">def</span> <span class="nf">external_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Define uma força externa que depende do tempo t.</span>
+<span class="sd">        </span>
+<span class="sd">        Pode ser utilizado por sub-implementações para definir uma força externa</span>
+<span class="sd">        aplicada aos objetos de uma sub-classe ou usando o recurso de &quot;duck typing&quot;</span>
+<span class="sd">        do Python</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; c = Circle(10)</span>
+<span class="sd">        &gt;&gt;&gt; c.external_force = lambda t: -c.pos_cm.x  </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">external_torque</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Define uma torque externo análogo ao método .external_force()&#39;&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">apply_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Aplica uma força linear durante um intervalo de tempo dt&#39;&#39;&#39;</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">force</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boost</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span> <span class="o">*</span> <span class="n">dt</span> <span class="o">+</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">apply_torque</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">torque</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Aplica um torque durante um intervalo de tempo dt&#39;&#39;&#39;</span>
+
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">torque</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aboost</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span> <span class="o">*</span> <span class="n">dt</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">dt</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_impulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impulse</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Aplica um impulso linear ao objeto. Isto altera sua velocidade </span>
+<span class="sd">        linear com relação ao centro de massa.</span>
+<span class="sd">        </span>
+<span class="sd">        Se for chamado com dois agumentos aplica o impulso em um ponto específico</span>
+<span class="sd">        e também resolve a dinâmica angular.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">boost</span><span class="p">(</span><span class="n">impulse</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_aimpulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">itorque</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Aplica um impulso angular ao objeto.&#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">aboost</span><span class="p">(</span><span class="n">itorque</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Atualiza o estado do objeto.</span>
+<span class="sd">        </span>
+<span class="sd">        Essa função *não* é chamada pelo mundo, mas apenas define uma interface</span>
+<span class="sd">        uniforme para que objetos isolados possam ser simulados.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pre_update</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dynamic_linear</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply_force</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">external_force</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dynamic_angular</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply_torque</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">external_torque</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_update</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">rescale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">update_physics</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Modifica o tamanho do objeto pelo fator de escala fornecido&#39;&#39;&#39;</span>
+
+        <span class="n">xcm</span><span class="p">,</span> <span class="n">ycm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_cm</span>
+        <span class="n">deltax</span><span class="p">,</span> <span class="n">deltay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">deltax</span><span class="p">,</span> <span class="n">deltay</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">deltax</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">deltay</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">xcm</span> <span class="o">-</span> <span class="n">deltax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">xcm</span> <span class="o">+</span> <span class="n">deltax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span> <span class="o">=</span> <span class="n">ycm</span> <span class="o">-</span> <span class="n">deltay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span> <span class="o">=</span> <span class="n">ycm</span> <span class="o">+</span> <span class="n">deltay</span>
+
+        <span class="k">if</span> <span class="n">update_physics</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">/=</span> <span class="n">scale</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">/=</span> <span class="n">scale</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Controle de estado dinâmico</span>
+    <span class="c">#===========================================================================</span>
+    <span class="k">def</span> <span class="nf">pause</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Pausa a dinâmica do objeto&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_paused</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_paused</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">can_move_linear</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">can_move_angular</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">can_move</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">unpause</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Retira a pausa de um objeto&#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_paused</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">can_move_linear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dynamic_linear</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">can_move_angular</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dynamic_angular</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">can_move</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dynamic_linear</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dynamic_angular</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_old_color</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">is_still</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Retorna verdadeiro se o objeto estiver parado ou se movendo muito </span>
+<span class="sd">        lentamente&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_move</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span><span class="o">.</span><span class="n">norm</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">PAUSE_SPEED</span> <span class="ow">and</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">omega_cm</span> <span class="o">&lt;</span> <span class="n">PAUSE_W_SPEED</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_dynamic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;angular&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invintertia</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;both&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;unknown mode: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">what</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_kinematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;angular&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invintertia</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;any&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;unknown mode: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">what</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_static</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;angular&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_static</span><span class="p">(</span><span class="s">&#39;linear&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_static</span><span class="p">(</span><span class="s">&#39;angular&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;any&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_static</span><span class="p">(</span><span class="s">&#39;linear&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_static</span><span class="p">(</span><span class="s">&#39;angular&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;unknown mode: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">what</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">make_dynamic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="n">angular</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="n">angular</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;angular&#39;</span><span class="p">:</span>
+            <span class="n">linear</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;unknown mode: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">what</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">linear</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_oldmass</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="o">.</span><span class="n">norm_sqr</span><span class="p">():</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_oldvel</span>
+        <span class="k">if</span> <span class="n">angular</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_oldinertia</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega_cm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_oldomega</span>
+
+    <span class="k">def</span> <span class="nf">make_kinematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="n">angular</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="n">angular</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;angular&#39;</span><span class="p">:</span>
+            <span class="n">linear</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;unknown mode: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">what</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">linear</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invmass</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_oldmass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mass</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="s">&#39;inf&#39;</span>
+        <span class="k">if</span> <span class="n">angular</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_oldinertia</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inertia</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">inertia</span> <span class="o">=</span> <span class="s">&#39;inf&#39;</span>
+
+    <span class="k">def</span> <span class="nf">make_static</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="n">angular</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="n">angular</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="o">==</span> <span class="s">&#39;angular&#39;</span><span class="p">:</span>
+            <span class="n">linear</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">elif</span> <span class="n">what</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;unknown mode: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">what</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_kinematic</span><span class="p">(</span><span class="n">what</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">linear</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="o">.</span><span class="n">norm_sqr</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_oldvel</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vel_cm</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">angular</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_oldomega</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">omega_cm</span> <span class="o">*=</span> <span class="mi">0</span>
+
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Desenhando objeto</span>
+    <span class="c">#===========================================================================</span>
+    <span class="k">def</span> <span class="nf">add_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel_pos</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Adiciona um ponto para ser desenhado na tela na posição relativa </span>
+<span class="sd">        fornecida&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_draw_ticks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;point&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_cm</span><span class="p">,</span> <span class="n">Vector2D</span><span class="p">(</span><span class="o">*</span><span class="n">rel_pos</span><span class="p">),</span> <span class="n">radius</span><span class="p">,</span> <span class="n">color</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">screen</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Desenha objeto na tela&#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_aabb</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+        <span class="n">screen</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">draw_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">screen</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Desenha pontos na lista de ticks&#39;&#39;&#39;</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_draw_ticks</span><span class="p">):</span>
+            <span class="n">head</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s">&#39;point&#39;</span><span class="p">:</span>
+                <span class="n">theta</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">rotated</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_cm</span> <span class="o">-</span> <span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_cm</span>
+                <span class="n">screen</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">draw_aabb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">screen</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">fill</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Desenha a caixa de contorno alinhada ao eixo&#39;&#39;&#39;</span>
+
+        <span class="n">screen</span><span class="o">.</span><span class="n">draw_aabb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span><span class="p">,</span>
+                         <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Interface Python</span>
+    <span class="c">#===========================================================================</span>
+    <span class="c"># Faz os objetos serem ordenado pelo valor da sua coordenada xmin. Isto</span>
+    <span class="c"># facilita a implementação do reordenamento de objetos, já que é possível</span>
+    <span class="c"># aplicar a função sort() diretamente na lista de objetos.</span>
+    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">xmin</span>
+
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">xmin</span>
+
+    <span class="c"># Define igualdade &lt;==&gt; identidade</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="ow">is</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="c"># Representação do objeto como string</span>
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tname</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%.1f</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_cm</span><span class="p">)</span>
+        <span class="n">vel</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%.1f</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_cm</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">(pos_cm=(</span><span class="si">%s</span><span class="s">), vel_cm=(</span><span class="si">%s</span><span class="s">))&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tname</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">vel</span><span class="p">)</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Classes derivadas</span>
+<span class="c">#===============================================================================</span>
+<span class="k">class</span> <span class="nc">LinearObject</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Classe base para todos os objetos que não possuem dinâmica angular.&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;inertia&#39;</span> <span class="ow">in</span> <span class="n">kwds</span> <span class="ow">or</span> <span class="s">&#39;omega_cm&#39;</span> <span class="ow">in</span> <span class="n">kwds</span> <span class="ow">or</span> <span class="s">&#39;theta_cm&#39;</span> <span class="ow">in</span> <span class="n">kwds</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;cannot set angular properties of linear objects&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinearObject</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invinertia</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_omega_cm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theta_cm</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inertia</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inertia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)</span>
+
+    <span class="n">omega_cm</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">Object</span><span class="o">.</span><span class="n">omega_cm</span><span class="p">)</span>
+    <span class="nd">@omega_cm.setter</span>
+    <span class="k">def</span> <span class="nf">omega_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;LinearObjects have null angular velocity&#39;</span><span class="p">)</span>
+
+    <span class="n">theta_cm</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">Object</span><span class="o">.</span><span class="n">theta_cm</span><span class="p">)</span>
+    <span class="nd">@omega_cm.setter</span>
+    <span class="k">def</span> <span class="nf">theta_cm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;LinearObjects have fixed orientation&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">FGAme</span> <span class="kn">import</span> <span class="o">*</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">FGAme 0.1.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../FGAme.html" >FGAme</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Fábio Macêdo Mendes.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

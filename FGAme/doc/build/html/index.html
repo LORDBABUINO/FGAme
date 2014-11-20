@@ -1,0 +1,681 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to FGAme’s documentation! &mdash; FGAme 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FGAme 0.1.1 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">FGAme 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-FGAme">
+<span id="welcome-to-fgame-s-documentation"></span><h1>Welcome to FGAme&#8217;s documentation!<a class="headerlink" href="#module-FGAme" title="Permalink to this headline">¶</a></h1>
+<p>dsfsd</p>
+<div class="section" id="tutorial">
+<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="exemplo-basico">
+<h3>Exemplo básico<a class="headerlink" href="#exemplo-basico" title="Permalink to this headline">¶</a></h3>
+<p>Este tutorial explica como utilizar a FGAme para a criação de jogos ou
+simulações de física simples. A FGAme é um motor de jogos com ênfase na
+simulação de física. Todos os objetos, portanto, possuem propriedades físicas
+bem definidas como massa, momento de inércia, velocidade, etc. A simulação da
+física é feita, em grande parte, de modo automático.</p>
+<p>O primeiro passo é definir o palco que os objetos habitarão. Isto pode ser feito
+criando um objeto da classe World().</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">world</span> <span class="o">=</span> <span class="n">World</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>A partir daí, podemos criar objetos e inserí-los na simulação</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj1</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;red&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">world</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Para modificar as propriedades físicas dos objetos basta modificar diretamente 
+os atributos correspondentes. Para uma lista completa de atributos, consulte
+o módulo ?Objects.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj1</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj1</span><span class="o">.</span><span class="n">pos_cm</span> <span class="o">=</span> <span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj1</span><span class="o">.</span><span class="n">vel_cm</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As variáveis dinâmicas podem ser modificadas diretamente, mas sempre que
+possível, devemos utilizar os  métodos que realizam os deslocamentos relativos
+(ex.: .move(), .boost(), etc). Estes métodos são mais eficientes.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="14%" />
+<col width="20%" />
+<col width="41%" />
+<col width="12%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variável</th>
+<th class="head">Escrita</th>
+<th class="head">Deslocamentos</th>
+<th class="head">Descrição</th>
+<th class="head">Unidade</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>pos_cm</td>
+<td>set_pos</td>
+<td>move</td>
+<td>Posição do centro de massa</td>
+<td>px</td>
+</tr>
+<tr class="row-odd"><td>vel_cm</td>
+<td>set_vel</td>
+<td>boost</td>
+<td>Velocidade do centro de massa</td>
+<td>px/s</td>
+</tr>
+<tr class="row-even"><td>theta_cm</td>
+<td>set_theta</td>
+<td>rotate</td>
+<td>Ângulo de rotação</td>
+<td>rad</td>
+</tr>
+<tr class="row-odd"><td>omega_cm</td>
+<td>set_omega</td>
+<td>aboost</td>
+<td>Velocidade angular</td>
+<td>rad/s</td>
+</tr>
+</tbody>
+</table>
+<p>Aplicamos uma operação de <cite>.move()</cite> e movê-lo com relação à posição anterior.
+Veja como fica a posiição final do objeto.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj1</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="mi">150</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="c"># deslocamento com relação à posição inicial</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj1</span><span class="o">.</span><span class="n">pos_cm</span>
+<span class="go">Vector(300, 50)</span>
+</pre></div>
+</div>
+<p>Para iniciar a simulação, basta chamar o comando</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">world</span><span class="o">.</span><span class="n">run</span><span class="p">()</span> 
+</pre></div>
+</div>
+</div>
+<div class="section" id="objetos-dinamicos">
+<h3>Objetos dinâmicos<a class="headerlink" href="#objetos-dinamicos" title="Permalink to this headline">¶</a></h3>
+<p>Apesar do FGAme não fazer uma distinção explícita durante a criação, os objetos
+no mundo podem ser do tipo dinâmicos, cinemáticos ou estáticos. Todos eles
+participam das colisões normalmente, mas a resposta física pode ser diferente em
+cada caso. Os objetos dinâmicos se movimentam na tela e respondem às forças
+externas e de colisão. Os objetos cinemáticos se movimentam (usualmente em
+movimento retilíneo uniforme), mas não sofrem a ação de nenhuma força. Já os
+objetos estáticos permanecem parados e não respondem a forças.</p>
+<p>A diferenciação é feita apenas pelo valor das massas e das velocidades. 
+Convertemos um objeto em cinemático atribuindo um valor infinito para a massa. 
+Um objeto será estático se tanto a massa quanto a velocidade forem nulas.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="s">&#39;inf&#39;</span> <span class="c"># automaticamente se torna estático pois a velocidade é nula</span>
+</pre></div>
+</div>
+<p>O FGAme utiliza esta informação para acelerar os cálculos de detecção de colisão
+e resolução de forças. As propriedades dinâmicas/estáticas dos objetos, no 
+entanto são inteiramente transparentes ao usuário.</p>
+<p>Vale observar que a condição de dinâmico vs. estático pode ser atribuída 
+independentemente para as variáveis lineares e angulares. No segundo caso, o 
+controle é feito pelo valor do momento de inércia no atributo <cite>.inertia</cite> do 
+objeto. Para transformar um objeto dinâmico em inteiramente estático, seria 
+necessário fazer a sequência de operações</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="s">&#39;inf&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">inertia</span> <span class="o">=</span> <span class="s">&#39;inf&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">vel_cm</span> <span class="o">*=</span> <span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">omega_cm</span> <span class="o">*=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>De modo mais simples, podemos fazer todas as operações de uma vez utilizando os
+métodos <cite>.make_static()</cite> (ou kinematic/dynamic) para controlar as propriedades
+dinâmicas do objeto.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">make_static</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Já os métodos <cite>.is_static()</cite> (ou kinematic/dynamic) permitem investigar se um
+determinado objeto satisfaz a alugma destas propriedades.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">is_dynamic</span><span class="p">()</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj2</span><span class="o">.</span><span class="n">is_static</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Lembramos que as colisões são calculadas apenas se um dos objetos envolvidos for
+dinâmico. Deste modo, quando dois objetos cinemáticos ou um objeto estático
+e um cinemático se encontram, nenhuma força é aplicada e eles simplemente 
+atravessam um pelo outro.</p>
+</div>
+<div class="section" id="forcas-basicas">
+<h3>Forças básicas<a class="headerlink" href="#forcas-basicas" title="Permalink to this headline">¶</a></h3>
+<p>Além das forças arbitrárias que podem atuar em qualquer objeto e dos impulsos
+associados às colisões, existem algumas forças que podem ser definidas 
+globalmente no objeto World(). Trata-se da força da gravidade e das forças 
+viscosas para as velocidades lineares e angulares.</p>
+<p>Na realidade, não definimos as forças diretamente, mas sim as acelerações que
+elas provocam em cada objeto. São as constantes <cite>gravity</cite>, <cite>damping</cite> e
+<cite>adamping</cite>. As forças são criadas a partir da fórmula</p>
+<blockquote>
+<div>F = obj.mass * (gravity - obj.vel_cm * damping)</div></blockquote>
+<p>E o torque é gerado por</p>
+<blockquote>
+<div>tau = -obj.inertia * adamping *  obj.omega_cm</div></blockquote>
+<p>Estas constantes podem ser definidas globalmente no objeto mundo ou
+individualmente. Deste modo, é possível que algum objeto possua uma gravidade
+diferente do resto do mundo. O mesmo se aplica às forças de amortecimento.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">world</span><span class="o">.</span><span class="n">gravity</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">world</span><span class="o">.</span><span class="n">adamping</span> <span class="o">=</span> <span class="mf">0.1</span>
+</pre></div>
+</div>
+<p>Todos objetos que não definirem explicitamente o valor destas constantes
+assumirão os valores definidos no mundo no qual estão inseridos. Acrescentamos
+um terceiro objeto com um valor de gravidade diferente do resto do mundo, para
+demonstrar este conceito.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">obj3</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">),</span> <span class="n">gravity</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="n">world</span><span class="o">=</span><span class="n">world</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;blue&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(Obs.: se o parâmetro world for fornecido, o objeto é adicionado 
+automaticamente durante a criação)</p>
+</div>
+<div class="section" id="interacao-com-o-usuario">
+<h3>Interação com o usuário<a class="headerlink" href="#interacao-com-o-usuario" title="Permalink to this headline">¶</a></h3>
+<p>Até agora vimos apenas como controlar os parâmetros de simulação física. É
+lógico que em um jogo deve ser existir alguma forma de interação com o usuário.
+Na FGAme, esta interação é controlada a partir da noção de eventos e callbacks.
+É possível registrar funções que são acionadas sempre que um determinado evento
+acontecer. Eventos podem ser disparados pelo usuário (ex.: apertar uma tecla),
+ou pela simulação (ex.: ocorrência de uma colisão).</p>
+<p>Digamos que a simulação deva pausar ou despausar sempre que a tecla de espaço 
+for apertada. Neste caso, devemos ligar o evento &#8220;apertou a tecla espaço&#8221; 
+com a função <cite>.toggle_pause()</cite> do mundo, que alterna o estado de pausa da 
+simulação.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">world</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="s">&#39;key-down&#39;</span><span class="p">,</span> <span class="s">&#39;space&#39;</span><span class="p">,</span> <span class="n">world</span><span class="o">.</span><span class="n">toggle_pause</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A tabela abaixo mostra os eventos mais comuns e a assinatura das funções de 
+callback</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="16%" />
+<col width="64%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Evento</th>
+<th class="head">Argumento</th>
+<th class="head">Descrição</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>key-down</td>
+<td>tecla</td>
+<td><p class="first">Chamado no frame que uma tecla é pressionada.
+O argumento pode ser um objeto &#8216;tecla&#8217;, que
+depende do back end utilizado ou uma string,
+que é portável para todos back ends.</p>
+<p>A string corresponde à tecla escolhida. Teclas
+especiais podem ser acessadas pelos seus nomes
+como em &#8216;space&#8217;, &#8216;up&#8217;, &#8216;down&#8217;, etc.</p>
+<p class="last">Os callbacks do tipo &#8216;key-down&#8217; são funções que
+não recebem nenhum argumento.</p>
+</td>
+</tr>
+<tr class="row-odd"><td>key-up</td>
+<td>tecla</td>
+<td>Como em &#8216;key-down&#8217;, mas é executado no frame em
+que a tecla é liberada pelo usuário.</td>
+</tr>
+<tr class="row-even"><td>long-press</td>
+<td>tecla</td>
+<td>Semelhante aos anteriores, mas é executado em
+<em>todos</em> os frames em que a tecla se mantiver
+pressionada.</td>
+</tr>
+<tr class="row-odd"><td>mouse-motion</td>
+<td>nenhum</td>
+<td><p class="first">Executado sempre que o ponteiro do mouse estiver
+presente na tela.</p>
+<p class="last">O callback é uma função que recebe um vetor com a
+posição do mouse como primeiro argumento.</p>
+</td>
+</tr>
+<tr class="row-even"><td>mouse-click</td>
+<td>botão</td>
+<td><p class="first">Como &#8216;mouse-motion&#8217;, mas só é executada após o
+clique. Deve ser registrada com &#8216;left&#8217;, &#8216;right&#8217;
+&#8216;middle&#8217; correspondendo a um dos 3 tipos de botão
+do mouse.</p>
+<p class="last">O callback recebe apeans a posição do ponteiro
+como primeiro argumento.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="criando-uma-aplicacao">
+<h3>Criando uma aplicação<a class="headerlink" href="#criando-uma-aplicacao" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="referencia">
+<h2>Referência<a class="headerlink" href="#referencia" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-FGAme.objects">
+<span id="objetos"></span><h3>Objetos<a class="headerlink" href="#module-FGAme.objects" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="classes-abstratas">
+<h4>Classes abstratas<a class="headerlink" href="#classes-abstratas" title="Permalink to this headline">¶</a></h4>
+<p>Todos os objetos físicos na FGAme herdam da classe Object ou de uma das 
+subclasses derivadas aqui. Não é possível instanciar estas classes diretamente,
+mas elas são a base para todos os tipos de objetos utilizados na FGAme.</p>
+<span class="target" id="module-FGAme.objects.base"></span><div class="section" id="modificando-o-estado-fisico-do-objeto">
+<h5>Modificando o estado físico do objeto<a class="headerlink" href="#modificando-o-estado-fisico-do-objeto" title="Permalink to this headline">¶</a></h5>
+<dl class="class">
+<dt id="FGAme.Object">
+<em class="property">class </em><tt class="descname">Object</tt><big>(</big><em>pos_cm=None</em>, <em>vel_cm=None</em>, <em>theta_cm=None</em>, <em>omega_cm=None</em>, <em>mass=None</em>, <em>density=None</em>, <em>inertia=None</em>, <em>color=None</em>, <em>name=None</em>, <em>damping=None</em>, <em>adamping=None</em>, <em>gravity=None</em>, <em>world=None</em><big>)</big><a class="headerlink" href="#FGAme.Object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classe base para a criação de objetos</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>&nbsp;</td>
+<td><strong>Propriedades físicas do objeto</strong></td>
+</tr>
+<tr class="row-even"><td>mass</td>
+<td>Massa do objeto. Por padrão é calculada como se a densidade fosse 1. Uma massa infinita transforma o objeto num objeto cinemático que não responde a forças lineares.</td>
+</tr>
+<tr class="row-odd"><td>inertia</td>
+<td>Momento de inércia do objeto com relação ao eixo z no centro de massa. Calculado automaticamente a partir da geometria e densidade do objeto. Caso seja infinito, o objeto não responderá a torques.</td>
+</tr>
+<tr class="row-even"><td>ROG, ROG_sqr</td>
+<td>Raio de giração e o quadrado do raio de giração. Utilizado para calcular o momento de inércia: $I = M R^2$, onde I é o momento de inércia, M a massa e R o raio de giração.</td>
+</tr>
+<tr class="row-odd"><td>density</td>
+<td>Densidade de massa: massa / área</td>
+</tr>
+<tr class="row-even"><td>area</td>
+<td>Área que o objeto ocupa</td>
+</tr>
+<tr class="row-odd"><td>&nbsp;</td>
+<td><strong>Variáveis dinâmicas</strong></td>
+</tr>
+<tr class="row-even"><td>pos_cm</td>
+<td>Posição do centro de massa do objeto</td>
+</tr>
+<tr class="row-odd"><td>vel_cm</td>
+<td>Velocidade linear medida a partir do centro de massa</td>
+</tr>
+<tr class="row-even"><td>theta_cm</td>
+<td>Ângulo da rotação em torno do eixo saindo do centro de massa do objeto</td>
+</tr>
+<tr class="row-odd"><td>ometa_cm</td>
+<td>Velocidade angular de rotação</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td><strong>Caixa de contorno</strong></td>
+</tr>
+<tr class="row-odd"><td>xmin, xmax, ymin, ymax</td>
+<td>Limites da caixa de contorno alinhada aos eixos que envolve o objeto</td>
+</tr>
+<tr class="row-even"><td>bbox</td>
+<td>Uma tupla com (xmin, xmax, ymin, ymax)</td>
+</tr>
+<tr class="row-odd"><td>shape</td>
+<td>Uma tupla (Lx, Ly) com a forma caixa de contorno nos eixos x e y.</td>
+</tr>
+<tr class="row-even"><td>rect</td>
+<td>Uma tupla com (xmin, ymin, Lx, Ly)</td>
+</tr>
+<tr class="row-odd"><td>&nbsp;</td>
+<td><strong>Forças globais</strong></td>
+</tr>
+<tr class="row-even"><td>gravity</td>
+<td>Valor da aceleração da gravidade aplicada ao objeto</td>
+</tr>
+<tr class="row-odd"><td>damping, adamping</td>
+<td>Constantes de amortecimento linear e angulor para forças viscosas aplicadas ao objeto</td>
+</tr>
+<tr class="row-even"><td>owns_gravity, owns_damping, owns_adamping</td>
+<td>Se Falso (padrão) utiliza os valores de gravity, damping e adamping fornecidos pelo mundo</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="FGAme.Object.set_pos">
+<tt class="descname">set_pos</tt><big>(</big><em>pos=None</em><big>)</big><a class="headerlink" href="#FGAme.Object.set_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reposiciona o centro de massa do objeto nas coordenadas especificadas 
+ou na origem.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.set_vel">
+<tt class="descname">set_vel</tt><big>(</big><em>vel=None</em><big>)</big><a class="headerlink" href="#FGAme.Object.set_vel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redefine a velocidade linear do centro de massa para o valor 
+especificado (ou para zero, em caso de omissão).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.set_theta">
+<tt class="descname">set_theta</tt><big>(</big><em>theta=None</em><big>)</big><a class="headerlink" href="#FGAme.Object.set_theta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reorienta o objeto para o ângulo fornecido ou para a orientação 
+inicial.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.set_omega">
+<tt class="descname">set_omega</tt><big>(</big><em>omega=None</em><big>)</big><a class="headerlink" href="#FGAme.Object.set_omega" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redefine a velocidade angular do centro de massa para o valor 
+especificado (ou para zero, em caso de omissão).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.move">
+<tt class="descname">move</tt><big>(</big><em>delta</em><big>)</big><a class="headerlink" href="#FGAme.Object.move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move o objeto por vetor de deslocamento delta</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.boost">
+<tt class="descname">boost</tt><big>(</big><em>delta</em><big>)</big><a class="headerlink" href="#FGAme.Object.boost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adiciona um valor vetorial delta à velocidade linear</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.rotate">
+<tt class="descname">rotate</tt><big>(</big><em>theta</em><big>)</big><a class="headerlink" href="#FGAme.Object.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotaciona o objeto por um ângulo theta</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.aboost">
+<tt class="descname">aboost</tt><big>(</big><em>delta</em><big>)</big><a class="headerlink" href="#FGAme.Object.aboost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adiciona um valor delta à velocidade ângular</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.vpoint">
+<tt class="descname">vpoint</tt><big>(</big><em>pos</em>, <em>relative=False</em><big>)</big><a class="headerlink" href="#FGAme.Object.vpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retorna a velocidade linear de um ponto em pos preso rigidamente ao 
+objeto.</p>
+<p>Se o parâmetro <cite>relative</cite> for verdadeiro, o vetor <cite>pos</cite> é interpretado
+como a posição relativa ao centro de massa. O padrão é considerá-lo
+como a posição absoluta no centro de coordenadas do mundo.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.external_force">
+<tt class="descname">external_force</tt><big>(</big><em>t</em><big>)</big><a class="headerlink" href="#FGAme.Object.external_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define uma força externa que depende do tempo t.</p>
+<p>Pode ser utilizado por sub-implementações para definir uma força externa
+aplicada aos objetos de uma sub-classe ou usando o recurso de &#8220;duck typing&#8221;
+do Python</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">external_force</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="o">-</span><span class="n">c</span><span class="o">.</span><span class="n">pos_cm</span><span class="o">.</span><span class="n">x</span>  
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.external_torque">
+<tt class="descname">external_torque</tt><big>(</big><em>t</em><big>)</big><a class="headerlink" href="#FGAme.Object.external_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define uma torque externo análogo ao método .external_force()</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.apply_force">
+<tt class="descname">apply_force</tt><big>(</big><em>force</em>, <em>dt</em><big>)</big><a class="headerlink" href="#FGAme.Object.apply_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aplica uma força linear durante um intervalo de tempo dt</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.apply_torque">
+<tt class="descname">apply_torque</tt><big>(</big><em>torque</em>, <em>dt</em><big>)</big><a class="headerlink" href="#FGAme.Object.apply_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aplica um torque durante um intervalo de tempo dt</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.apply_impulse">
+<tt class="descname">apply_impulse</tt><big>(</big><em>impulse</em>, <em>pos=None</em>, <em>relative=False</em><big>)</big><a class="headerlink" href="#FGAme.Object.apply_impulse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aplica um impulso linear ao objeto. Isto altera sua velocidade 
+linear com relação ao centro de massa.</p>
+<p>Se for chamado com dois agumentos aplica o impulso em um ponto específico
+e também resolve a dinâmica angular.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.apply_aimpulse">
+<tt class="descname">apply_aimpulse</tt><big>(</big><em>itorque</em><big>)</big><a class="headerlink" href="#FGAme.Object.apply_aimpulse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aplica um impulso angular ao objeto.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.update">
+<tt class="descname">update</tt><big>(</big><em>dt</em>, <em>time=0</em><big>)</big><a class="headerlink" href="#FGAme.Object.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atualiza o estado do objeto.</p>
+<p>Essa função <em>não</em> é chamada pelo mundo, mas apenas define uma interface
+uniforme para que objetos isolados possam ser simulados.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.rescale">
+<tt class="descname">rescale</tt><big>(</big><em>scale</em>, <em>update_physics=True</em><big>)</big><a class="headerlink" href="#FGAme.Object.rescale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modifica o tamanho do objeto pelo fator de escala fornecido</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.pause">
+<tt class="descname">pause</tt><big>(</big><big>)</big><a class="headerlink" href="#FGAme.Object.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pausa a dinâmica do objeto</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.unpause">
+<tt class="descname">unpause</tt><big>(</big><big>)</big><a class="headerlink" href="#FGAme.Object.unpause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retira a pausa de um objeto</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.is_still">
+<tt class="descname">is_still</tt><big>(</big><big>)</big><a class="headerlink" href="#FGAme.Object.is_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retorna verdadeiro se o objeto estiver parado ou se movendo muito 
+lentamente</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.add_point">
+<tt class="descname">add_point</tt><big>(</big><em>rel_pos</em>, <em>color=(255</em>, <em>0</em>, <em>0)</em>, <em>radius=5</em><big>)</big><a class="headerlink" href="#FGAme.Object.add_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adiciona um ponto para ser desenhado na tela na posição relativa 
+fornecida</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.draw">
+<tt class="descname">draw</tt><big>(</big><em>screen</em><big>)</big><a class="headerlink" href="#FGAme.Object.draw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Desenha objeto na tela</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.draw_ticks">
+<tt class="descname">draw_ticks</tt><big>(</big><em>screen</em><big>)</big><a class="headerlink" href="#FGAme.Object.draw_ticks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Desenha pontos na lista de ticks</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FGAme.Object.draw_aabb">
+<tt class="descname">draw_aabb</tt><big>(</big><em>screen</em>, <em>color=(255</em>, <em>0</em>, <em>0)</em>, <em>fill=False</em><big>)</big><a class="headerlink" href="#FGAme.Object.draw_aabb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Desenha a caixa de contorno alinhada ao eixo</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FGAme.LinearObject">
+<em class="property">class </em><tt class="descname">LinearObject</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#FGAme.LinearObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classe base para todos os objetos que não possuem dinâmica angular.</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="classes-derivadas">
+<h4>Classes derivadas<a class="headerlink" href="#classes-derivadas" title="Permalink to this headline">¶</a></h4>
+<p>#.. autoclass:: FGAme.AABB
+#.. autoclass:: FGAme.Circle
+#.. autoclass:: FGAme.Poly
+#.. autoclass:: FGAme.Letter</p>
+</div>
+<div class="section" id="funcoes-especiais-para-a-criacao-de-objetos">
+<h4>Funções especiais para a criação de objetos<a class="headerlink" href="#funcoes-especiais-para-a-criacao-de-objetos" title="Permalink to this headline">¶</a></h4>
+<p>#.. automodule :: FGAme.letters</p>
+</div>
+</div>
+<div class="section" id="classe-mundo-e-aplicacoes">
+<h3>Classe mundo e aplicações<a class="headerlink" href="#classe-mundo-e-aplicacoes" title="Permalink to this headline">¶</a></h3>
+<p>#.. automodule:: FGAme.world</p>
+</div>
+<div class="section" id="colisoes">
+<h3>Colisões<a class="headerlink" href="#colisoes" title="Permalink to this headline">¶</a></h3>
+<p>#.. automodule:: FGAme.collision</p>
+</div>
+<div class="section" id="funcoes-matematicas">
+<h3>Funções matemáticas<a class="headerlink" href="#funcoes-matematicas" title="Permalink to this headline">¶</a></h3>
+<p>#.. automodule:: FGAme.mathutils</p>
+</div>
+<div class="section" id="topicos-avancados">
+<h3>Tópicos avançados<a class="headerlink" href="#topicos-avancados" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="anatomia-de-uma-colisao">
+<h3>Anatomia de uma colisão<a class="headerlink" href="#anatomia-de-uma-colisao" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="loop-principal">
+<h3>Loop principal<a class="headerlink" href="#loop-principal" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to FGAme&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#tutorial">Tutorial</a><ul>
+<li><a class="reference internal" href="#exemplo-basico">Exemplo básico</a></li>
+<li><a class="reference internal" href="#objetos-dinamicos">Objetos dinâmicos</a></li>
+<li><a class="reference internal" href="#forcas-basicas">Forças básicas</a></li>
+<li><a class="reference internal" href="#interacao-com-o-usuario">Interação com o usuário</a></li>
+<li><a class="reference internal" href="#criando-uma-aplicacao">Criando uma aplicação</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#referencia">Referência</a><ul>
+<li><a class="reference internal" href="#module-FGAme.objects">Objetos</a><ul>
+<li><a class="reference internal" href="#classes-abstratas">Classes abstratas</a><ul>
+<li><a class="reference internal" href="#modificando-o-estado-fisico-do-objeto">Modificando o estado físico do objeto</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#classes-derivadas">Classes derivadas</a></li>
+<li><a class="reference internal" href="#funcoes-especiais-para-a-criacao-de-objetos">Funções especiais para a criação de objetos</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#classe-mundo-e-aplicacoes">Classe mundo e aplicações</a></li>
+<li><a class="reference internal" href="#colisoes">Colisões</a></li>
+<li><a class="reference internal" href="#funcoes-matematicas">Funções matemáticas</a></li>
+<li><a class="reference internal" href="#topicos-avancados">Tópicos avançados</a></li>
+<li><a class="reference internal" href="#anatomia-de-uma-colisao">Anatomia de uma colisão</a></li>
+<li><a class="reference internal" href="#loop-principal">Loop principal</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">FGAme 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Fábio Macêdo Mendes.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
