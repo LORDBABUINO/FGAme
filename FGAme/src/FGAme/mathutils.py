@@ -55,7 +55,8 @@ class Vector(object):
         x, y = self
         x = str(x) if x != int(x) else str(int(x))
         y = str(y) if y != int(y) else str(int(y))
-        return 'Vector(%s, %s)' % (x, y)
+        tname = type(self).__name__
+        return '%s(%s, %s)' % (tname, x, y)
 
     def __str__(self):
         '''x.__str__() <==> str(x)'''

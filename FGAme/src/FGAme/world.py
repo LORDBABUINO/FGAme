@@ -350,22 +350,23 @@ class World(Listener):
             if obj._invmass:
                 F = obj._init_frame_force()
                 F += obj.external_force(t) or (0, 0)
-            elif obj._vel_cm.x or obj._vel_cm.y:
-                obj.move(obj._vel_cm * dt)
 
             if obj._invinertia:
                 tau = obj.global_torque()
                 tau += obj.external_torque(t) or 0
                 self._frame_tau = tau
-            elif obj._omega_cm:
-                obj.rotate(obj._omega_cm * dt)
 
         # Applica as forças e acelerações
         for obj in self._objects_col:
             if obj._invmass:
                 obj.apply_force(obj._frame_force, dt)
+            elif obj._vel_cm.x or obj._vel_cm.y:
+                obj.move(obj._vel_cm * dt)
+
             if obj._invinertia:
                 obj.apply_torque(obj._frame_tau, dt)
+            elif obj._omega_cm:
+                obj.rotate(obj._omega_cm * dt)
 
     #===========================================================================
     # Cálculo de parâmetros físicos

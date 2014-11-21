@@ -7,28 +7,260 @@ Created on 19/11/2014
 from FGAme.mathutils import *
 import numpy as np
 
-class ForceFunc(object):
-    def __init__(self, func):
+class ForceProperty(object):
+    '''Implementa o atributo external_force dos objetos da classe Object.
+    
+    ForceProperty facilita a composição de forças num mesmo objeto e apresenta
+    um sintaxe conveniente para especificar as forças atuantes em um objeto.
+    
+    Exemplo
+    -------
+    
+    Considere uma classe com uma propriedade do tipo ForceProperty()
+    
+    >>> class HasForce(object):
+    ...     force = ForceProperty()
+    
+    Criamos um objeto desta classe e atribuimos uma força a ele.
+    
+    >>> obj = HasForce()
+    >>> obj.force = lambda x: (0, x**2)
+    >>> obj.force(2)
+    Vector(0, 4)
+    
+    Também podemos definir a força utilizando um decorador se for mais 
+    conveniente
+    
+    >>> @obj.force
+    ... def force(x):
+    ...     return (0, x**3)
+    >>> obj.force(2)
+    Vector(0, 8)
+    
+    O recurso mais importante, no entanto, é a composição de forças. Podemos
+    definir uma composição de forças simplesmente adicionando ou subtraindo 
+    forças ao atributo original
+    
+    >>> obj.force += lambda x: (0, x**2)
+    >>> obj.force(2) # => 2**2 + 2**3
+    Vector(0, 12)
+    
+    Ooutras operações algébricas também estão definidas
+    
+    >>> obj.force *= 2
+    >>> obj.force(2)
+    Vector(0, 24)
+    
+    Os decoradores também estão disponíveis para as operações de adição e 
+    subtração de forças.
+    
+    >>> @obj.force.add
+    ... def force(x):
+    ...     return (0, x**4)
+    >>> obj.force(2)
+    Vector(0, 40)
+    
+    Notas
+    -----
+    
+    A função que executa a força será sempre gravada no atributo correspondente
+    ao nome da propriedade iniciado com um '_'. O acesso via este atributo é
+    mais rápido e pode ser utilizado internamente para os implementadores
+    da classe. 
+    
+    Um segundo atributo com o sufixo '_ctrl' também é criado para controlar como
+    as forças se compõe e como parte da implementação do idioma mostrado
+    anteriormente. Ambos nomes podem ser  modificados no construtor da
+    propriedade.  
+    
+    >>> obj._force # doctest: +ELLIPSIS
+    <function ... at 0x...>
+    >>> obj._force_ctrl # doctest: +ELLIPSIS
+    <...ForcePropertyCtrl object at 0x...>
+    '''
+    def __init__(self, attr_name=None, ctrl_name=None):
+        self.attr_name = attr_name
+        self.ctrl_name = ctrl_name
+
+    # Acessa nome e ctrl ou calcula sob demanda
+    def _name(self, cls):
+        name = self.attr_name
+        if name is None:
+            name = self.attr_name = '_' + self._inspect_name(cls)
+        return name
+
+    def _ctrl(self, cls):
+        name = self.ctrl_name
+        if name is None:
+            name = self.ctrl_name = self._name(cls) + '_ctrl'
+        return name
+
+    def _inspect_name(self, cls):
+        '''Tenta descobrir o nome que a propriedade possui dentro da classe 
+        cls'''
+
+        for attr in dir(cls):
+            if getattr(cls, attr) is self:
+                return attr
+        raise RuntimeError('property is not attached to a class')
+
+    # getters e setters para classes Python
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        try:
+            return getattr(obj, self._ctrl(cls))
+        except AttributeError:
+            ctrl = ForcePropertyCtrl(obj, self._name(cls))
+            setattr(obj, self._ctrl(cls), ctrl)
+            setattr(obj, self._name(cls), None)
+            return ctrl
+
+    def __set__(self, obj, func):
+        ctrl = self.__get__(obj, type(obj))
+        if ctrl is not func:
+            ctrl.clear()
+            ctrl.add(func)
+
+class ForcePropertyCtrl(object):
+    '''
+    Controla as operações com forças em um objeto. Pode ser chamado com um 
+    argumento numérico para calcular a força. Também aceita o idioma de
+    composição de forças descrito na classe ForceProperty
+    '''
+
+    def __init__(self, obj, attr_name):
         self._funcs = []
+        self._obj = obj
+        self._attr = attr_name
+        self._fast = None
 
-    def __call__(self, t):
-        F = VectorM(0, 0)
-        for func in self._funcs:
-            res = func(t)
-            F.x += res[0]
-            F.y += res[1]
-        return F
+    def add(self, other):
+        '''Adiciona uma nova força à interação com a partícula'''
 
-    def __add__(self, other):
-        if isinstance(other, ForceFunc):
-            self._funcs.extend(other._funcs)
+        self._funcs.append((None, other))
+        self._update_fast()
+
+    def mul(self, other):
+        '''Multiplica todas as forças por uma constante multiplicativa'''
+
+        assert not callable(other)
+        L = self._funcs
+        for i, (k, f) in enumerate(L):
+            k = other if k is None else other * k
+            L[i] = (k, f)
+        self._update_fast()
+
+    def clear(self):
+        '''Limpa todas as forças que atuam no objeto'''
+
+        self._funcs = []
+        self._update_fast()
+
+    # Funções privadas ---------------------------------------------------------
+    def _update_fast(self):
+        '''Atualiza a função que calcula a força de acordo com os tipos de
+        transformações presentes até o momento.
+        
+        Atualiza o método de acesso rápido do objeto em questão.'''
+        if self._funcs:
+            # Monta hierarquia de funções rápidas
+            adds = [ f for (k, f) in self._funcs if k is None ]
+            muls = { k: [] for (k, _) in self._funcs if k is not None }
+            for k, f in self._funcs:
+                if k is not None:
+                    muls[k].append(f)
+            fmuls = { k: L for (k, L) in muls.items() if callable(k) }
+            nmuls = { k: L for (k, L) in muls.items() if not callable(k) }
+
+            # Implementa versões específicas da mais especializada para a menos
+            # Começamos no caso onde só existem forças aditivas
+            if not fmuls and not nmuls:
+                fast_func = self._make_fast_adds(adds)
+
+            # Agora o caso onde todas as multiplicações são numéricas. Criamos
+            # uma lista de tuplas (k, f) com a constante multiplicativa e
+            # com a função
+            elif not fmuls:
+                combined = [ (1, f) for f in adds ]
+                for (k, L) in nmuls.items():
+                    combined.extend((k, f) for f in L)
+                fast_func = self._make_fast_combined(combined)
+
+            else:
+                raise NotImplementedError(nmuls, fmuls)
+
+            # Salva a função rápida
+            self._fast = fast_func
+            setattr(self._obj, self._attr, fast_func)
+
+        # Não existe nenhuma função registrada: atribui o atributo de acesso
+        # rápido a None
         else:
-            self._funcs.append(other)
+            self._fast = None
+            setattr(self._obj, self._attr, None)
 
+    def _make_fast_adds(self, adds):
+        '''Cria função que retorna a força como a soma de todas as forças em
+        adds'''
+
+        F = VectorM(0, 0)
+        Fmul = F.__imul__  # usamos estas funções para evitar problemas de
+        Fadd = F.__iadd__  # escopo no closure fa função fast_func
+        def fast_func(t):
+            Fmul(0)
+            for func in adds:
+                Fadd(func(t))
+            return F
+        return fast_func
+
+    def _make_fast_combined(self, combined):
+        '''Cria função que retorna a força como a soma de todas as constantes
+        k e forças f para cada elemento (k, f) em combined'''
+
+        F = VectorM(0, 0)
+        Fmul = F.__imul__
+        Fadd = F.__iadd__
+        def fast_func(t):
+            Fmul(0)
+            for k, func in combined:
+                fi = func(t)
+                Fadd((k * fi[0], k * fi[1]))
+            return F
+        return fast_func
+
+    # Métodos mágicos ----------------------------------------------------------
+    def __call__(self, t):
+        # Se o argumento for uma função, significa que estamos usando o
+        # decorador para definir o valor da força
+        if callable(t):
+            func = t
+            self.clear()
+            self.add(func)
+            return func
+
+        # Caso contrário, assume que o argumento é numérico e executa
+        t = float(t)
+        if self._fast is not None:
+            return Vector(*self._fast(t))
+        else:
+            return Vector(0, 0)
+
+    def __iadd__(self, other):
+        self.add(other)
+        return self
+
+    def __imul__(self, other):
+        self.mul(other)
+        return self
+
+#===============================================================================
+# Implementações de forças específicas -- forças de 1 objeto
+#===============================================================================
 class SingleForce(object):
     '''Implementa uma força simples aplicada a um objeto.
     
-    O modo 'mode' possui o mesmo significado que na classe PairForce().'''
+    O argumento 'mode' possui o mesmo significado que na classe PairForce().'''
 
     def __init__(self, obj, func, mode='time'):
         self._obj = obj
@@ -111,6 +343,9 @@ class GravitySF(SingleConservativeForce):
 
         super(GravitySF, self).__init__(obj, F, U)
 
+#===============================================================================
+# Implementações de forças específicas -- forças de 2 objetos
+#===============================================================================
 class PairForce(object):
     '''
     Força que opera em um par de partículas respeitando a lei de ação e reação.
@@ -325,7 +560,9 @@ class GravityF(PairConservativeForce):
     G = property(lambda x: x._G)
     epsilon = property(lambda x: x._epsilon)
 
-
+#===============================================================================
+# Implementações de forças específicas -- forças aplicadas a grupos de objetos
+#===============================================================================
 class GravityPool(object):
     def __init__(self, objects):
         self.objects = list(objects)
@@ -335,3 +572,7 @@ class GravityPool(object):
 
     def get_all_forces(self, mutable=True):
         return [ self.get_force(obj, mutable) for obj in self.objects ]
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

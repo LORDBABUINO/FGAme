@@ -546,13 +546,13 @@ class Object(Listener):
         reduzida, mas a simulação ainda manteria alguma credibilidade.
         '''
 
-        self._accel_cm += a
-        self._accel_cm /= 2
-        self.boost(self._accel_cm * dt)
-        self.move(self._vel_cm * dt + a * (dt ** 2 / 2.))
-        self._accel_cm.copy_from(a)
-#        self.move(self._vel_cm * dt + a * dt ** 2 / 2)
-#        self.boost(a * dt)
+#        self._accel_cm += a
+#        self._accel_cm /= 2
+#        self.boost(self._accel_cm * dt)
+#        self.move(self._vel_cm * dt + a * (dt ** 2 / 2.))
+#        self._accel_cm.copy_from(a)
+        self.move(self._vel_cm * dt + a * dt ** 2 / 2)
+        self.boost(a * dt)
 
     def apply_torque(self, torque, dt):
         '''Aplica um torque durante um intervalo de tempo dt.'''
