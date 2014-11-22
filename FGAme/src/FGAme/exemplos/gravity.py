@@ -4,9 +4,9 @@ Implementa o exemplo de "pseudo-gravidade" da documentação.
 '''
 
 from FGAme import *
-from FGAme.force import SpringF, GravityF
+from FGAme.force import SpringF, GravityF, SpringSF, GravitySF
 
-get_mainloop(fps=240)
+#get_mainloop(fps=240)
 
 class Gravity(World):
     def __init__(self):
@@ -23,12 +23,18 @@ class Gravity(World):
         K = self.K = A.mass
         F = SpringF(A, B, (K, 2 * K))
         F = GravityF(A, B, 3e4)
+        Fa = SpringSF(A, 2 * K, r0=(0, 0))
+        Fb = GravitySF(B, 0.9e4, epsilon=10)
         A.external_force, B.external_force = F.forces()
+        #A.external_force = Fa
+        #B.external_force = Fb
 
         E0 = F.totalE()
+        #E0 = Fa.totalE() + Fb.totalE()
         @self.listen('frame-enter')
         def printP():
-            print(F.totalE() / E0)
+            print('%.e' % (Fa.totalE() + Fb.totalE() - E0))
+            #print(F.totalE() / E0)
 
 if __name__ == '__main__':
     Gravity().run()

@@ -17,7 +17,7 @@ class Pong(World):
 
         # Cria a bola com uma velocidade aleatória
         self.ball = Circle(30, color='red', world=self, inertia='inf')
-        self.ball.vel_cm = (-400, choice([-1, 1]) * uniform(200, 400))
+        self.ball.vel_cm = (-700, choice([-1, 1]) * uniform(200, 400))
 
         # Cria a barras
         self.pong1 = AABB(shape=[20, 130], pos_cm=(350, 0), world=self, mass='inf')

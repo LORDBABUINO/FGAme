@@ -148,10 +148,10 @@ class Pong(World):
         if self.pong.pos_cm.y > self.min_pong_y:
             self.pong.move((0, -self.pong_step))
             self.pong.vel_cm = (0, -400)
-            
+
     def move_left(self):
         '''Executado quando o usuário aperta a seta para o lado'''
-        
+
         self.pong.boost((-400, 0))
 
     def update_time(self):
@@ -167,7 +167,7 @@ class Pong(World):
 
         V = self.ball.vel_cm.norm()
         if V < self.max_ball_speed:
-            V += 1
+            V += 3
             self.ball.vel_cm = self.ball.vel_cm.normalized() * V
 
     def check_fail(self):

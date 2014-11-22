@@ -285,6 +285,9 @@ class SingleForce(object):
         else:
             raise ValueError('invalid value for fargs: %r' % fargs)
 
+    def __call__(self, t):
+        return self._func_ready(t)
+
     obj = property(lambda x: x._obj)
     func = property(lambda x: x._func)
     mode = property(lambda x: x._mode)
@@ -331,7 +334,7 @@ class GravitySF(SingleConservativeForce):
         r0 = self._r0 = Vector(*r0)
 
         def F(R):
-            R = R - r0
+            R = r0 - R
             r = R.norm()
             r3 = (r + epsilon) ** 2 * r
             R *= G * obj._mass * M / r3
@@ -342,6 +345,45 @@ class GravitySF(SingleConservativeForce):
             return -self._G * obj._mass * M / (R + self._epsilon)
 
         super(GravitySF, self).__init__(obj, F, U)
+
+    G = property(lambda x: x._G)
+    M = property(lambda x: x._M)
+    epsilon = property(lambda x: x._epsilon)
+    r0 = property(lambda x: x._r0)
+
+class SpringSF(SingleConservativeForce):
+    '''Implementa uma força devido a uma mola com constante elástica k fixa na
+    posição r0. Consulte a documentação de SpringF() para verificar como
+    configurar a anisotropia da mola.'''
+
+    def __init__(self, obj, k, r0=(0, 0)):
+        kxy = 0
+        x0, y0 = self._r0 = Vector(*r0)
+
+        try:  # Caso isotrópico
+            kx = ky = k = self._k = float(k)
+        except TypeError:  # Caso anisotrópico
+            k = self._k = tuple(map(float, k))
+            if len(k) == 2:
+                kx, ky = k
+            else:
+                kx, ky, kxy = k
+
+        # Define forças e potenciais
+        def F(R):
+            Dx = x0 - R._x
+            Dy = y0 - R._y
+            return Vector(kx * Dx + kxy * Dy, ky * Dy + kxy * Dx)
+
+        def U(R):
+            Dx = x0 - R._x
+            Dy = y0 - R._y
+            return (kx * Dx ** 2 + ky * Dy ** 2 + 2 * kxy * Dx * Dy) / 2
+
+        super(SpringSF, self).__init__(obj, F, U)
+
+    k = property(lambda x: x._k)
+    r0 = property(lambda x: x._r0)
 
 #===============================================================================
 # Implementações de forças específicas -- forças de 2 objetos

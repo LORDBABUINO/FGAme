@@ -546,13 +546,11 @@ class Object(Listener):
         reduzida, mas a simulação ainda manteria alguma credibilidade.
         '''
 
-#        self._accel_cm += a
-#        self._accel_cm /= 2
-#        self.boost(self._accel_cm * dt)
-#        self.move(self._vel_cm * dt + a * (dt ** 2 / 2.))
-#        self._accel_cm.copy_from(a)
-        self.move(self._vel_cm * dt + a * dt ** 2 / 2)
-        self.boost(a * dt)
+        self._accel_cm += a
+        self._accel_cm /= 2
+        self.boost(self._accel_cm * dt)
+        self.move(self._vel_cm * dt + a * (dt ** 2 / 2.))
+        self._accel_cm.copy_from(a)
 
     def apply_torque(self, torque, dt):
         '''Aplica um torque durante um intervalo de tempo dt.'''
@@ -598,7 +596,9 @@ class Object(Listener):
         self.post_update(dt)
 
     def rescale(self, scale, update_physics=True):
-        '''Modifica o tamanho do objeto pelo fator de escala fornecido'''
+        '''Modifica o tamanho do objeto pelo fator de escala fornecido. 
+        O objeto se mantêm centrado no centro de massa após a operaçao de
+        escala.'''
 
         xcm, ycm = self.pos_cm
         deltax, deltay = self.shape
@@ -609,8 +609,14 @@ class Object(Listener):
         self.ymax = ycm + deltay
 
         if update_physics:
-            self.mass /= scale ** 2
-            self.inertia /= scale ** 2
+            self.rescale_physics(scale)
+
+    def rescale_physics(self, scale):
+        '''Modifica o valor da massa e do momento de inércia de acordo com
+        o fator de escala fornecido'''
+
+        self.mass *= scale ** 2
+        self.inertia *= scale ** 4
 
     #===========================================================================
     # Controle de estado dinâmico
@@ -648,6 +654,19 @@ class Object(Listener):
                     self.omega_cm < PAUSE_W_SPEED)
 
     def is_dynamic(self, what=None):
+        '''Retorna True se o objeto for dinâmico.
+        
+        Existem 4 assinaturas diferentes:
+            obj.is_dynamic()
+                Equivalente a `obj.is_dynamic('linear') or obj.is_dynamic('angular')`
+            obj.is_dynamic('linear')
+                Retorna o estado dinâmico das variáveis lineares.
+            obj.is_dynamic('angular')
+                Retorna o estado dinâmico das variáveis angulares.
+            obj.is_dynamic('both')
+                Equivalente a `obj.is_dynamic('linear') and obj.is_dynamic('angular')`
+        '''
+
         if what is None:
             return bool(self._invmass) or bool(self._invinertia)
         elif what == 'linear':
@@ -660,6 +679,20 @@ class Object(Listener):
             raise ValueError('unknown mode: %r' % what)
 
     def is_kinematic(self, what=None):
+        '''Retorna True se o objeto for cinemático em oposição a ser um objeto
+        dinâmico.
+        
+        Existem 4 assinaturas diferentes:
+            obj.is_kinematic()
+                Equivalente a `obj.is_kinematic('linear') and obj.is_kinematic('angular')`
+            obj.is_kinematic('linear')
+                Retorna o estado cinemático das variáveis lineares.
+            obj.is_kinematic('angular')
+                Retorna o estado cinemático das variáveis angulares.
+            obj.is_kinematic('any')
+                Equivalente a `obj.is_kinematic('linear') or obj.is_kinematic('angular')`
+        '''
+
         if what is None:
             return not (self._invmass or self._invinertia)
         elif what == 'linear':
@@ -672,6 +705,19 @@ class Object(Listener):
             raise ValueError('unknown mode: %r' % what)
 
     def is_static(self, what=None):
+        '''Retorna True se o objeto for estático.
+        
+        Existem 4 assinaturas diferentes:
+            obj.is_static()
+                Equivalente a `obj.is_static('linear') and obj.is_static('angular')`
+            obj.is_static('linear')
+                Retorna verdadeiro se o objeto for estático nas variáveis lineares.
+            obj.is_kinematic('angular')
+                Retorna verdadeiro se o objeto for estático nas variáveis angulare.
+            obj.is_static('any')
+                Equivalente a `obj.is_static('linear') or obj.is_static('angular')`
+        '''
+
         if what == 'linear':
             return not bool(self._invmass) and not (self._vel_cm.x or self.vel_cm.y)
         elif what == 'angular':
@@ -684,6 +730,13 @@ class Object(Listener):
             raise ValueError('unknown mode: %r' % what)
 
     def make_dynamic(self, what=None):
+        '''Resgata a massa, inércia e velocidades anteriores de um objeto 
+        paralizado pelo método `obj.make_static()` ou `obj.make_kinematic()`.
+        
+        Pode especificar as variáveis lineares ou angulares separadamente com o
+        argumento opcional `what`.
+        '''
+
         linear = angular = True
         if what == 'linear':
             angular = False
@@ -700,6 +753,12 @@ class Object(Listener):
             if not self._omega_cm: self.omega_cm = self._oldomega
 
     def make_kinematic(self, what=None):
+        '''Transforma o objeto em cinemático fazendo com que as massas e 
+        momento de inércia se tornem infinitos.
+        
+        Pode especificar as variáveis lineares ou angulares separadamente com o
+        argumento opcional `what`.
+        '''
         linear = angular = True
         if what == 'linear':
             angular = False
@@ -718,6 +777,13 @@ class Object(Listener):
                 self.inertia = 'inf'
 
     def make_static(self, what=None):
+        '''Transforma o objeto em estático fazendo com que as massas e 
+        momento de inércia se tornem infinitos e as velocidades nulas.
+        
+        Pode especificar as variáveis lineares ou angulares separadamente com o
+        argumento opcional `what`.
+        '''
+
         linear = angular = True
         if what == 'linear':
             angular = False
@@ -739,9 +805,14 @@ class Object(Listener):
     #===========================================================================
     # Desenhando objeto
     #===========================================================================
-    def add_point(self, rel_pos, color=(255, 0, 0), radius=5):
+    def get_visual(self):
+        '''Retorna uma lista com instruções sobre quais formas/sprites desenhar
+        para aquele objeto.'''
+
+    def add_visual(self, obj, pos=(0, 0), rotation=0):
         '''Adiciona um ponto para ser desenhado na tela na posição relativa 
         fornecida'''
+
         self._draw_ticks.append(('point', self.theta_cm, Vector2D(*rel_pos), radius, color))
 
     def draw(self, screen):
@@ -808,6 +879,10 @@ class LinearObject(Object):
     @property
     def inertia(self):
         return float('inf')
+    @inertia.setter
+    def inertia(self, value):
+        if 1 / value:
+            raise ValueError('LinearObjects have infinite inertia')
 
     omega_cm = copy(Object.omega_cm)
     @omega_cm.setter
