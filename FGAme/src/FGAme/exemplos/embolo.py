@@ -33,23 +33,25 @@ class Gas(World):
         embolo.external_force = lambda t:-100 * embolo.vel_cm
         self.add(embolo)
 
-        # Pausa/continua simulação
-        self.listen('key-down', 'space', self.toggle_pause)
-        self.listen('long-press', 'up', self.energy_up)
-        self.listen('long-press', 'down', self.energy_down)
-
+    @listen('long-press', 'up')
     def energy_up(self):
         '''Aumenta a energia de todas as partículas'''
 
         for bola in self.bolas:
             bola.vel_cm *= 1.01
 
+    @listen('long-press', 'down')
     def energy_down(self):
         '''Diminui a energia de todas as partículas'''
 
         for bola in self.bolas:
             bola.vel_cm *= 0.99
 
+    @listen('key-down', 'space')
+    def toggle_pause(self):
+        super(Gas, self).toggle_pause()
+
 # Inicia a simulação
 if __name__ == '__main__':
     Gas().run()
+

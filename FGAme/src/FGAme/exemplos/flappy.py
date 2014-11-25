@@ -6,9 +6,39 @@ Flappy Triangle on 18/11/2014
 from FGAme import *
 from random import uniform
 
-class Flappy(World):
+class Flappy(Poly):
+    def __init__(self, **kwds):
+        super(Flappy, self).__init__([(0, 0), (40, 0), (20, 80)], color='red', **kwds)
+        self.pos_cm = (-200, 0)
+        self.rotate(uniform(0, 2 * pi))
+        self.inertia *= 10
+        self.omega_cm = uniform(-2, 2)
+        self.receiving_input = True
+
+    @listen('key-down', 'space')
+    def flappy_up(self):
+        '''Aumenta a velocidade vertical do flappy'''
+
+        if self.receiving_input:
+            self.boost((0, 150))
+
+    @listen('key-down', 'left', (0.2,))
+    @listen('key-down', 'right', (-0.2,))
+    def change_omega(self, delta):
+        '''Modifica a velocidade angular do flappy por um fator delta'''
+
+        if self.receiving_input:
+            self.omega_cm += delta
+
+    @listen('collision')
+    def block_input(self, col=None):
+        '''Bloqueia a entrada do usuário'''
+
+        self.receiving_input = False
+
+class Game(World):
     def __init__(self):
-        super(Flappy, self).__init__(gravity=200)
+        super(Game, self).__init__(gravity=200)
 
         # Adiciona obstáculos
         self.N = N = 4
@@ -21,17 +51,8 @@ class Flappy(World):
         self.floor = AABB(bbox=(-400, 400, -400, -290), mass='inf', world=self)
         self.ceiling = AABB(bbox=(-400, 400, 290, 500), mass='inf', world=self)
 
-        # Adiciona o flappy triangle
-        self.flappy = Poly([(0, 0), (40, 0), (20, 80)], color='red', world=self)
-        self.flappy.pos_cm = (-200, 0)
-        self.flappy.rotate(uniform(0, 2 * pi))
-        self.flappy.inertia *= 10
-        self.flappy.omega_cm = uniform(-2, 2)
-        self.listen('key-down', 'space', self.flappy_up)
-        self.listen('key-down', 'left', self.change_omega, (0.2,))
-        self.listen('key-down', 'right', self.change_omega, (-0.2,))
-        self.flappy.listen('collision', self.block_input)
-        self.receiving_input = True
+        # Adiciona o Flappy
+        self.flappy = Flappy(world=self)
 
     def new_obstacle(self, pos_x):
         '''Cria um novo obstáculo na posição pos_x'''
@@ -60,23 +81,6 @@ class Flappy(World):
         if self.flappy.xmax < -400:
             self.game_over()
 
-    def flappy_up(self):
-        '''Aumenta a velocidade vertical do flappy'''
-
-        if self.receiving_input:
-            self.flappy.boost((0, 150))
-
-    def change_omega(self, delta):
-        '''Modifica a velocidade angular do flappy por um fator delta'''
-
-        if self.receiving_input:
-            self.flappy.omega_cm += delta
-
-    def block_input(self, col=None):
-        '''Bloqueia a entrada do usuário'''
-
-        self.receiving_input = False
-
     def game_over(self):
         '''Game over'''
 
@@ -99,4 +103,4 @@ class GameOver(World):
         Flappy().run()
 
 if __name__ == '__main__':
-    Flappy().run()
+    Game().run()

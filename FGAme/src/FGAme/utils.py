@@ -24,6 +24,8 @@ class lazy(object):
         self.func = func
 
     def __get__(self, obj, cls=None):
+        if obj is None:
+            return self
         value = self.func(obj)
         setattr(obj, self.func.__name__, value)
         return value

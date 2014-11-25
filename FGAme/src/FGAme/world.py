@@ -42,10 +42,11 @@ class World(Listener):
         self._bounds = None
         self._hard_bounds = None
 
-        # Controle de callbacks de colisão
+        # Controle de callbacks
         self.is_paused = False
         self._main_loop = get_mainloop()
         self._input_listener = get_input_listener()
+        super(World, self).__init__()
 
     #===========================================================================
     # Propriedades
@@ -350,11 +351,17 @@ class World(Listener):
             if obj._invmass:
                 F = obj._init_frame_force()
                 F += obj.external_force(t) or (0, 0)
+            elif obj.accel_static:
+                a = obj._init_frame_accell()
+                obj.apply_accel(a)
 
             if obj._invinertia:
                 tau = obj.global_torque()
                 tau += obj.external_torque(t) or 0
                 self._frame_tau = tau
+            elif obj.accel_static:
+                a = obj._init_frame_alpha()
+                obj.apply_alpha(a)
 
         # Applica as forças e acelerações
         for obj in self._objects_col:

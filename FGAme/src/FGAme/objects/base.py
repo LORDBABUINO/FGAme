@@ -22,7 +22,8 @@ from ..mathutils import *
 from ..utils import *
 from ..collision import *
 from ..utils import lazy
-from ..listener import Listener
+from ..listener import Listener, InputListener
+from ..backends import get_input_listener
 PAUSE_SPEED = 5
 PAUSE_W_SPEED = 0.05
 COLOR_CODES = {
@@ -96,14 +97,15 @@ class Object(Listener):
     owns_gravity, owns_damping, owns_adamping
         Se Falso (padrão) utiliza os valores de gravity, damping e adamping
         fornecidos pelo mundo 
-    
-    
+    accel_static
+        Caso verdadeiro, aplica as acelerações de gravidade, damping e adamping
+        no objeto mesmo se ele for estático
     '''
     def __init__(self, pos_cm=None, vel_cm=None,
                        theta_cm=None, omega_cm=None,
                        mass=None, density=None, inertia=None,
                        color=None, name=None,
-                       damping=None, adamping=None, gravity=None,
+                       damping=None, adamping=None, gravity=None, accel_static=False,
                        world=None):
 
         # Variáveis dinâmicas
@@ -143,6 +145,7 @@ class Object(Listener):
         self._frame_accel = VectorM(0, 0)
         self._frame_tau = 0
         self._frame_alpha = 0
+        self.accel_static = accel_static
 
         # Cor/material
         if color is not None: self.color = color
@@ -154,6 +157,9 @@ class Object(Listener):
         # Adiciona ao mundo
         if world is not None:
             world.add(self)
+
+        # Inicializa listeners
+        super(Object, self).__init__()
 
     #===========================================================================
     #: Propriedades e constantes físicas
@@ -324,7 +330,30 @@ class Object(Listener):
         self._adamping = float(value)
         self.owns_adamping = True
 
-    EVENTS = {'collision': (0, 1)}
+    EVENTS = InputListener.EVENTS.copy()
+    EVENTS.update({
+        'collision': (0, 1),
+        'frame-enter': (0, 0),
+    })
+    #TODO: copiou e colou do Mundo. Fazer mais bem organizado
+    _input_listener = get_input_listener()
+    def _listen_long_press(self, key, cb_func=None, args=None, kwargs=None):
+        if cb_func:
+            self._input_listener.listen('long-press', key, cb_func, args, kwargs)
+        else:
+            return self._input_listener.listen('long-press', key)
+
+    def _listen_key_up(self, key, cb_func=None, args=None, kwargs=None):
+        if cb_func:
+            self._input_listener.listen('key-up', key, cb_func, args, kwargs)
+        else:
+            return self._input_listener.listen('key-up', key)
+
+    def _listen_key_down(self, key, cb_func=None, args=None, kwargs=None):
+        if cb_func:
+            self._input_listener.listen('key-down', key, cb_func, args, kwargs)
+        else:
+            return self._input_listener.listen('key-down', key)
 
     @property
     def color(self):

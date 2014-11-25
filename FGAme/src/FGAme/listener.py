@@ -9,6 +9,9 @@ class Listener(object):
 
     EVENTS = {}
 
+    def __init__(self):
+        self._auto_register_listeners(self)
+
     def listen(self, *args):
         '''Registra um callback a um determinado evento'''
 
@@ -96,6 +99,29 @@ class Listener(object):
                 else:
                     args, kwargs = aux
                     cb(*(fargs + args), **kwargs)
+
+    def _auto_register_func(self, func, L=None):
+        '''Register a single function by checking its cb_signals attribute'''
+
+        if L is None:
+            L = func.cb_signals
+        for args in L:
+            args = list(args)
+            evname = args[0]
+            nargs = self.EVENTS[evname][0]
+            args.insert(nargs + 1, func)
+            self.listen(*args)
+
+    def _auto_register_listeners(self, obj=None):
+        '''Registra listeners definidos pelo usuário'''
+
+        register = self._auto_register_func
+        if obj is None:
+            obj = self
+        for attr in dir(type(obj)):
+            cls_method = getattr(type(obj), attr)
+            if hasattr(cls_method, 'cb_signals'):
+                register(getattr(obj, attr))
 
 class InputListener(Listener):
     '''Objetos do tipo listener escutam eventos de entrada do usuário e executam
@@ -239,3 +265,21 @@ class InputListener(Listener):
         usuários que ocorreram. Deve ser reimplementada nas classes filho'''
 
         raise NotImplementedError
+
+#===============================================================================
+# Funções úteis e decoradores
+#===============================================================================
+def listen(*args):
+    '''Decorador que registra uma função como sendo um callback de um 
+    determinado sinal'''
+
+    def decorator(func):
+        try:
+            L = func.cb_signals
+        except AttributeError:
+            L = func.cb_signals = []
+        finally:
+            L.append(args)
+        return func
+
+    return decorator
