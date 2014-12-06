@@ -6,12 +6,12 @@ as partículas cessam o movimento.
 '''
 
 from FGAme import *
-from random import uniform, choice
+from random import uniform, choice, randint
 #set_backend('pygame')
 
 # Inicializa o mundo
 class Gas(World):
-    def __init__(self, gravity=50, friction=0.0, num_balls=100, speed=200, radius=10):
+    def __init__(self, gravity=50, friction=0.0, num_balls=100, speed=200, radius=10, color='random'):
         '''Cria uma simulação de um gás de partículas confinado por um êmbolo
         com `num_balls` esferas de raio `radius` com velocidades no intervalo 
         de +/-`speed`.'''
@@ -24,7 +24,8 @@ class Gas(World):
         for _ in range(num_balls):
             pos = Vector(uniform(-380, 380), uniform(-290, 100))
             vel = Vector(uniform(-speed, speed), uniform(-speed, speed))
-            bola = Circle(radius=radius, vel_cm=vel, pos_cm=pos, color=(200, 180, 0), mass=1)
+            bola = Circle(radius=radius, vel_cm=vel, pos_cm=pos, mass=1)
+            bola.color = self.get_color(color)
             self.bolas.append(bola)
             self.add(bola)
 
@@ -32,6 +33,12 @@ class Gas(World):
         embolo = AABB(bbox=(-379.9, 379.9, 120, 170), color=(150, 0, 0), mass=num_balls / 2)
         embolo.external_force = lambda t:-100 * embolo.vel_cm
         self.add(embolo)
+
+    def get_color(self, color):
+        if color == 'random':
+            return (randint(0, 255), randint(0, 255), randint(0, 255))
+        else:
+            return color
 
     @listen('long-press', 'up')
     def energy_up(self):

@@ -45,7 +45,7 @@ class ForceProperty(object):
     >>> obj.force(2) # => 2**2 + 2**3
     Vector(0, 12)
     
-    Ooutras operações algébricas também estão definidas
+    Outras operações algébricas também estão definidas
     
     >>> obj.force *= 2
     >>> obj.force(2)

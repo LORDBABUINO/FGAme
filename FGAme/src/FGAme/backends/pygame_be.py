@@ -69,7 +69,6 @@ class PyGameListener(InputListener):
     #===========================================================================
     # Laço principal de escuta de eventos
     #===========================================================================
-
     def step(self):
         for event in pygame.event.get():
             if event.type == QUIT:

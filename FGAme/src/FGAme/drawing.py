@@ -160,7 +160,7 @@ class Rect(Geometric):
     def rotate(self, theta):
         raise ValueError('cannot rotate a Rect object')
 
-    def as_poly(self, mode=4, scaled):
+    def as_poly(self, mode=4, scaled=True):
         '''Retorna o retângulo como um objeto do tipo polígono'''
 
         vertices = self.as_vertices(mode, relative=True)

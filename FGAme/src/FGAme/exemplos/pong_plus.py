@@ -3,6 +3,8 @@ from FGAme import *
 from random import uniform, choice, random
 from math import pi
 
+set_backend('pygamegfx')
+
 class Pong(World):
     def __init__(self, **kwds):
         # Inicializa o mundo

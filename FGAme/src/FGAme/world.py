@@ -399,7 +399,6 @@ class World(Listener):
     # Laço principal
     #===========================================================================
     def run(self, timeout=None, sym_timeout=None):
-
         self._main_loop.physics_update = self.update
         self._main_loop.draw = self.draw
         self._main_loop.run()
