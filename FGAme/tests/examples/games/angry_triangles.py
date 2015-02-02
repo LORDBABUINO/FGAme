@@ -3,7 +3,7 @@ from __future__ import print_function
 
 from FGAme import *
 from random import uniform, choice
-from math import sqrt
+from math_tests import sqrt
 
 def random_color():
     return tuple(int(uniform(0, 255)) for i in range(3))

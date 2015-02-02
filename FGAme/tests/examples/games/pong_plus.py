@@ -1,7 +1,7 @@
 #-*- coding: utf8 -*-
 from FGAme import *
 from random import uniform, choice, random
-from math import pi
+from math_tests import pi
 
 class Pong(World):
     def __init__(self, **kwds):

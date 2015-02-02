@@ -3,7 +3,7 @@ from __future__ import print_function
 
 from FGAme import *
 from random import uniform, choice
-from math import pi
+from math_tests import pi
 print('Starting simulation...')
 
 def random_color():

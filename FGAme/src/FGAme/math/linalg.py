@@ -144,7 +144,11 @@ class Vector(object):
 
     def __nonzero__(self):
         return True
-
+    
+    def __eq__(self, other):
+        x, y = other
+        return self._x == x and self._y == y            
+        
     @property
     def x(self): return self._x
 
