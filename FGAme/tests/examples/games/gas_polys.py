@@ -23,4 +23,4 @@ for _ in range(NUM_POLYS):
     world.add(obj)
 
 # Inicia a simulação
-world.run()
+world.run(timeout=3)

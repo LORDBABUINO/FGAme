@@ -286,4 +286,4 @@ from . import math
 from . import draw
 from .core import *
 from .physics import *
-from .apps import *
+from .app import *

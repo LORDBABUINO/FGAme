@@ -165,13 +165,13 @@ class Poly(Object):
         super(Poly, self).rotate(theta)
 
         # Realiza a matriz de rotação manualmente para melhor performance
-        cost, sint = cos(theta), sin(theta)
+        cos_t, sin_t = cos(theta), sin(theta)
         X, Y = self._pos_cm
         for v in self.vertices:
             x = v.x - X
             y = v.y - Y
-            v.x = cost * x - sint * y + X
-            v.y = cost * y + sint * x + Y
+            v.x = cos_t * x - sin_t * y + X
+            v.y = cos_t * y + sin_t * x + Y
 
         self._xmin = min(pt.x for pt in self.vertices)
         self._xmax = max(pt.x for pt in self.vertices)
