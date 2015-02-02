@@ -2,8 +2,6 @@
 <projectDescription>
 	<name>FGAme</name>
 	<comment></comment>
-	<projects>
-	</projects>
 	<buildSpec>
 		<buildCommand>
 			<name>org.python.pydev.PyDevBuilder</name>

@@ -1,7 +1,5 @@
 #-*- coding: utf8 -*-
 '''
-dsfsd
-
 ========
 Tutorial
 ========
@@ -280,9 +278,12 @@ Loop principal
 
 '''
 from __future__ import absolute_import
-print('')
-from .world import *
-from .collision import *
-from .objects import *
-from .backends import *
-from .listener import listen
+
+#===============================================================================
+# Importa pacotes
+#===============================================================================
+from . import math
+from . import draw
+from .core import *
+from .physics import *
+from .apps import *
