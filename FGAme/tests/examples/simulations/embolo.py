@@ -7,7 +7,7 @@ as partículas cessam o movimento.
 
 from FGAme import *
 from random import uniform, choice, randint
-#set_backend('pygame')
+set_backend('pygamegfx')
 
 # Inicializa o mundo
 class Gas(World):
@@ -30,7 +30,7 @@ class Gas(World):
             self.add(bola)
 
         # Inicia êmbolo
-        embolo = AABB(bbox=(-9.9, 789.9, 420, 470), color=(150, 0, 0), mass=num_balls / 2)
+        embolo = AABB(bbox=(11, 789, 420, 470), color=(150, 0, 0), mass=num_balls / 2)
         embolo.external_force = lambda t:-100 * embolo.vel_cm
         self.add(embolo)
 
@@ -40,23 +40,23 @@ class Gas(World):
         else:
             return color
 
-#     @listen('long-press', 'up')
-#     def energy_up(self):
-#         '''Aumenta a energia de todas as partículas'''
-# 
-#         for bola in self.bolas:
-#             bola.vel_cm *= 1.01
-# 
-#     @listen('long-press', 'down')
-#     def energy_down(self):
-#         '''Diminui a energia de todas as partículas'''
-# 
-#         for bola in self.bolas:
-#             bola.vel_cm *= 0.99
-# 
-#     @listen('key-down', 'space')
-#     def toggle_pause(self):
-#         super(Gas, self).toggle_pause()
+    @listen('long-press', 'up')
+    def energy_up(self):
+        '''Aumenta a energia de todas as partículas'''
+ 
+        for bola in self.bolas:
+            bola.vel_cm *= 1.01
+ 
+    @listen('long-press', 'down')
+    def energy_down(self):
+        '''Diminui a energia de todas as partículas'''
+ 
+        for bola in self.bolas:
+            bola.vel_cm *= 0.99
+ 
+    @listen('key-down', 'space')
+    def toggle_pause(self):
+        super(Gas, self).toggle_pause()
 
 # Inicia a simulação
 if __name__ == '__main__':
