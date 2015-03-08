@@ -1,38 +1,33 @@
 #-*- coding: utf8 -*-
-from __future__ import absolute_import
-if __name__ == '__main__':
-    __package__ = 'FGAme.objects'; import FGAme.objects
 
-from math import trunc, sin
-from .base import Object
-from .aabb import AABB
-from FGAme.math import Vector, area, ROG_sqr, center_of_mass, dot, cross, pi, clip, VectorM
+from FGAme.physics import Object, AABB, Collision, get_collision
+from FGAme.draw import DPolygon
+from FGAme.math import Vector, VectorM, dot, cross
+from FGAme.math import area, center_of_mass, ROG_sqr
+from FGAme.math import sin, cos, pi
+from FGAme.math import clip
 from FGAme.util import lazy
-from FGAme.physics import get_collision, Collision, get_collision_aabb
-from FGAme.draw import DPoly
-from math import cos, sin
 
 class Poly(Object):
     '''Define um polígono arbitrário de N lados.'''
 
-    def __init__(self, vertices, pos_cm=None, **kwds):
-        if pos_cm is not None:
-            raise TypeError('cannot define pos_cm for polygonal shapes')
+    def __init__(self, vertices, pos=None, **kwds):
+        if pos is not None:
+            raise TypeError('cannot define pos for polygonal shapes')
 
         self.vertices = [VectorM(*pt) for pt in vertices]
-        super(Poly, self).__init__(pos_cm=(0, 0), **kwds)
         self._xmin = min(pt.x for pt in self.vertices)
         self._xmax = max(pt.x for pt in self.vertices)
         self._ymin = min(pt.y for pt in self.vertices)
         self._ymax = max(pt.y for pt in self.vertices)
-        self._pos_cm = center_of_mass(self.vertices)
+        super(Poly, self).__init__(pos=center_of_mass(self.vertices), **kwds)
         self.num_sides = len(self.vertices)
         self._normals_idxs = self.get_li_indexes()
         self.num_normals = len(self._normals_idxs or self.vertices)
 
         # Aceleramos um pouco o cálculo para o caso onde todas as normais são LI.
         # entre si. Isto é sinalizado por self._normals_idx = None, que implica
-        # que todas as normais do polígono devem ser recalculadas.
+        # que todas as normais do polígono devem ser recalculadas a cada frame
         if self.num_normals == self.num_sides:
             self._normals_idxs = None
 
@@ -41,32 +36,34 @@ class Poly(Object):
     # Construtores alternativos
     #===========================================================================
     @classmethod
-    def regular(cls, N, length, pos_cm=(0, 0), **kwds):
+    def regular(cls, N, length, pos=(0, 0), **kwds):
         '''Cria um polígono regoular com N lados de tamanho "length".'''
 
         alpha = pi / N
         theta = 2 * alpha
         b = length / (2 * sin(alpha))
         P0 = Vector(b, 0)
-        points = [ (P0.rotated(n * theta) + pos_cm) for n in range(N) ]
+        points = [ (P0.rotated(n * theta)) for n in range(N) ]
 
-        return Poly(points, **kwds)
+        new = Poly(points, **kwds)
+        new.pos = pos
+        return new
 
     @classmethod
-    def rect(cls, bbox=None, shape=None, pos_cm=None, centered=False, **kwds):
+    def rect(cls, bbox=None, shape=None, pos=None, centered=False, **kwds):
         '''Cria um retângulo especificando ou a caixa de contorno ou a posição 
         do centro de massa e a forma.'''
 
         if bbox:
             xmin, xmax, ymin, ymax = bbox
-            if pos_cm is not None:
-                raise TypeError('cannot set bbox and pos_cm simultaneously')
+            if pos is not None:
+                raise TypeError('cannot set bbox and pos simultaneously')
             points = [ (xmax, ymin), (xmax, ymax), (xmin, ymax), (xmin, ymin) ]
 
             return Poly(points, **kwds)
 
         elif shape:
-            x, y = pos_cm or (0, 0)
+            x, y = pos or (0, 0)
             dx, dy = shape
             if centered:
                 xmin, xmax = x - dx / 2., x + dx / 2.
@@ -81,12 +78,12 @@ class Poly(Object):
             raise TypeError('either shape or bbox must be defined')
 
     @classmethod
-    def triangle(cls, sides, pos_cm=(0, 0), **kwds):
+    def triangle(cls, sides, pos=(0, 0), **kwds):
         '''Cria um triângulo especificando o tamanho dos lados'''
         pass
 
     @classmethod
-    def blob(cls, N, scale, pos_cm=(0, 0), **kwds):
+    def blob(cls, N, scale, pos=(0, 0), **kwds):
         '''Cria um polígono convexo aleatório especificando o número de lados e 
         um fator de escala.'''
         pass
@@ -154,7 +151,7 @@ class Poly(Object):
     #===========================================================================
     def get_primitive_drawable(self, color='black', solid=True, lw=0):
         
-        return DPoly(self, color, solid, lw)
+        return DPolygon(self, color, solid, lw)
 
     def move(self, delta):
         super(Poly, self).move(delta)
@@ -166,7 +163,7 @@ class Poly(Object):
 
         # Realiza a matriz de rotação manualmente para melhor performance
         cos_t, sin_t = cos(theta), sin(theta)
-        X, Y = self._pos_cm
+        X, Y = self._pos
         for v in self.vertices:
             x = v.x - X
             y = v.y - Y
@@ -180,15 +177,15 @@ class Poly(Object):
 
     def scale(self, scale, update_physics=False):
         # Atualiza os pontos
-        Rcm = self.pos_cm
+        Rcm = self.pos
         for v in self.vertices:
             v -= Rcm
             v *= scale
             v += Rcm
 
         # Atualiza AABB
-        X = [ x for (x, y) in self.vertices ]
-        Y = [ y for (x, y) in self.vertices ]
+        X = [ x for (x, _) in self.vertices ]
+        Y = [ y for (_, y) in self.vertices ]
         self._xmin, self._xmax = min(X), max(X)
         self._ymin, self._ymax = min(Y), max(Y)
 
@@ -235,7 +232,7 @@ def get_collision_poly(A, B, directions=None):
             norm = u
 
     # Determina o sentido da normal
-    if dot(A.pos_cm, norm) > dot(B.pos_cm, norm):
+    if dot(A.pos, norm) > dot(B.pos, norm):
         norm = -norm
 
     # Computa o polígono de intersecção e usa o seu centro de massa como ponto
@@ -262,7 +259,7 @@ def get_collision_poly_aabb(A, B):
 
 
 @get_collision.dispatch(AABB, Poly)
-def get_collision_poly_aabb(A, B):
+def get_collision_aabb_poly(A, B):
     '''Implementa a colisão entre um polígono arbitrário e uma caixa AABB'''
 
     A_poly = Poly.rect(bbox=A.bbox, density=A.density)

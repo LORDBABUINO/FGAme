@@ -16,16 +16,16 @@ def explode(obj, world, energy=0, prob_rec=0.5):
         pt1 = obj.vertices[(idx + 1) % N]
         pt2 = obj.vertices[(idx + 2) % N]
 
-        new_objects.append(Poly([pt0, middle, pt2], color=obj.color, omega_cm=obj.omega_cm, density=obj.density))
-        new_objects.append(Poly([middle, pt1, pt2], color=obj.color, omega_cm=obj.omega_cm, density=obj.density))
+        new_objects.append(Poly([pt0, middle, pt2], color=obj.color, omega=obj.omega, density=obj.density))
+        new_objects.append(Poly([middle, pt1, pt2], color=obj.color, omega=obj.omega, density=obj.density))
 
     else:
         # Determina os vértices da triangulação e cria objeto
         for i in range(N):
             pt1 = obj.vertices[i]
             pt2 = obj.vertices[(i + 1) % N]
-            pt3 = obj.pos_cm
-            new = Poly([pt1, pt2, pt3], color=obj.color, omega_cm=obj.omega_cm, density=obj.density)
+            pt3 = obj.pos
+            new = Poly([pt1, pt2, pt3], color=obj.color, omega=obj.omega, density=obj.density)
             new_objects.append(new)
 
     # Distribui as energias adicionais aleatoriamente entre os objetos
@@ -37,12 +37,12 @@ def explode(obj, world, energy=0, prob_rec=0.5):
     # Processa os novos objetos criados
     for i, new in enumerate(new_objects):
         # Calcula a direção radial da explosão e move o objeto
-        norm = (new.pos_cm - obj.pos_cm).normalized()
+        norm = (new.pos - obj.pos).normalized()
         new.move(norm)
 
         # Adiciona velocidade de acordo com a velocidade original e com a
         # contribuição de energia
-        new.boost(obj.vpoint(new.pos_cm))
+        new.boost(obj.vpoint(new.pos))
 
         # Adiciona objeto ao mundo
         world.add(new)

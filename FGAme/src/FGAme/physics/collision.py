@@ -31,17 +31,17 @@ class Collision(object):
         mu = self.friction_coeff()
 
         # Calcula a resposta impulsiva
-        vrel = B.vel_cm - A.vel_cm
+        vrel = B.vel - A.vel
         J_denom = A._invmass + B._invmass
 
-        if A._invinertia or A._omega_cm:
-            x, y = R = pos - A.pos_cm
-            vrel -= A._omega_cm * Vector(-y, x)
+        if A._invinertia or A._omega:
+            x, y = R = pos - A.pos
+            vrel -= A._omega * Vector(-y, x)
             J_denom += cross(R, n) ** 2 * A._invinertia
 
-        if B._invinertia or B._omega_cm:
-            x, y = R = pos - B.pos_cm
-            vrel += B.omega_cm * Vector(-y, x)
+        if B._invinertia or B._omega:
+            x, y = R = pos - B.pos
+            vrel += B.omega * Vector(-y, x)
             J_denom += cross(R, n) ** 2 * B._invinertia
 
         # Determina o impulso total
@@ -100,11 +100,11 @@ class Collision(object):
         if A._invmass:
             A.apply_impulse(-J)
         if A._invinertia:
-            A.apply_aimpulse(cross(pos - A.pos_cm, -J))
+            A.apply_aimpulse(cross(pos - A.pos, -J))
         if B._invmass:
             B.apply_impulse(J)
         if B._invinertia:
-            B.apply_aimpulse(cross(pos - B.pos_cm, J))
+            B.apply_aimpulse(cross(pos - B.pos, J))
 
         # Move objetos para evitar as superposições
         if delta is not None:

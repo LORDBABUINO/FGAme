@@ -5,7 +5,6 @@ Created on 19/11/2014
 @author: chips
 '''
 from FGAme.math import *
-import numpy as np
 
 class ForceProperty(object):
     '''Implementa o atributo external_force dos objetos da classe Object.
@@ -277,9 +276,9 @@ class SingleForce(object):
         elif mode == 'all':
             self._func_ready = lambda t: func(obj, t)
         elif mode == 'positions':
-            pos = obj._pos_cm
+            pos = obj._pos
             def new_func(t):
-                assert pos is obj._pos_cm
+                assert pos is obj._pos
                 return func(pos)
             self._func_ready = new_func
         else:
@@ -314,7 +313,7 @@ class SingleConservativeForce(SingleForce):
     def potentialE(self):
         '''Energia potencial do par de partículas'''
 
-        return self.U(self.obj._pos_cm)
+        return self.U(self.obj._pos)
 
     U = property(lambda x: x._U)
 
@@ -433,9 +432,9 @@ class PairForce(object):
         elif mode == 'all':
             self._func_ready = lambda t: func(A, B, t)
         elif mode == 'positions':
-            A_pos, B_pos = A._pos_cm, B._pos_cm
+            A_pos, B_pos = A._pos, B._pos
             def new_func(t):
-                assert A_pos is A._pos_cm and B_pos is B._pos_cm
+                assert A_pos is A._pos and B_pos is B._pos
                 return func(A_pos, B_pos)
             self._func_ready = new_func
         else:
@@ -522,7 +521,7 @@ class PairConservativeForce(PairForce):
     def potentialE(self):
         '''Energia potencial do par de partículas'''
 
-        return self.U(self.A._pos_cm, self.B._pos_cm)
+        return self.U(self.A._pos, self.B._pos)
 
     U = property(lambda x: x._U)
 
