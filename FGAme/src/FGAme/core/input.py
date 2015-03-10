@@ -13,17 +13,12 @@ class Input(Listener):
     mouse_motion = signal('mouse-motion', num_args=1)
     mouse_click = signal('mouse-click', 'button', num_args=1)
 
-    #===========================================================================
-    # Registra callbacks de tipos específicos de eventos
-    #===========================================================================
     def __init__(self):
         super(Input, self).__init__()
         self._longpress_keys = set()
         self._mouse_motion_handler = self._handlers['mouse-motion']
     
-    #===========================================================================
-    # Callbacks globais para cada tipo de evento
-    #===========================================================================
+    # Callbacks globais para cada tipo de evento -------------------------------
     def process_key_down(self, key):
         '''Executa todos os callbacks associados à tecla fornecida'''
 

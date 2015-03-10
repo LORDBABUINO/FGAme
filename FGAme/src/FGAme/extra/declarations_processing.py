@@ -22,9 +22,9 @@ def load_tree(tree):
 
 if __name__ == '__main__':
     example = (
-        'Ball:\n'
+        'Circle:\n'
         '    radius: 30\n'
-        '    pos_cm: (400, 300)\n'
+        '    pos: (400, 300)\n'
     )
     tree = parse_data(example)
     print(load_tree(tree))

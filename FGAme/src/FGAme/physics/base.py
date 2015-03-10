@@ -14,7 +14,7 @@ Modificando o estado físico do objeto
 
 from copy import copy
 from FGAme.core import Listener, signal
-from FGAme.draw import DRectangleAA, RenderTree, Color
+from FGAme.draw import RectEcho, RenderTree, Color
 from FGAme.math import Vector, VectorM, asvector
 from FGAme.util import lazy
 
@@ -811,7 +811,7 @@ class Object(Listener):
         '''Retorna um objeto que pode ser utilizado para desenhar a AABB do
         objeto físico considerado'''
         
-        return DRectangleAA(self, color=color, lw=lw, solid=solid)
+        return RectEcho(self, color=color, lw=lw, solid=solid)
     
     #===========================================================================
     # Controle de eventos

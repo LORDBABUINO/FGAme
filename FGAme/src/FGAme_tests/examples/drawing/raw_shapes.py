@@ -8,7 +8,7 @@ p0 = (400, 300)
 tree = RenderTree()
 tree.add(Circle(p0, 150, color='red'))
 tree.add(RectangleAA((100, 100, 200, 200), color='blue'))
-tree.add(Polygon([(400, 200), (800, 200), (600, 500)], color='black'))
+tree.add(Poly([(400, 200), (800, 200), (600, 500)], color='black'))
 
 # Cria um objeto Canvas com a geometria da tela
 canvas = PyGameCanvas(800, 600)

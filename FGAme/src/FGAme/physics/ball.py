@@ -2,7 +2,7 @@
 from FGAme.math import pi
 from FGAme.physics import get_collision, Object, Collision
 from FGAme.util import lazy
-from FGAme.draw import DCircle
+from FGAme.draw import CircleEcho
 
 class Circle(Object):
     '''Define um círculo e implementa a detecção de colisão comparando a 
@@ -28,7 +28,7 @@ class Circle(Object):
         screen.draw_circle(self.pos, self.radius, color=self.color)
         
     def get_primitive_drawable(self, color='black', lw=0, solid=True):
-        return DCircle(self, color=color, lw=lw, solid=solid)
+        return CircleEcho(self, color=color, lw=lw, solid=solid)
 
     @lazy
     def area(self):

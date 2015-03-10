@@ -2,17 +2,17 @@
 FGAme
 =====
 
-FGAme é um motor de jogos 2D para Python utilizado na aula de introdução à 
-física de jogos. A FGAme tem como objetivos principais a simplicidade e 
+FGAme é um motor de jogos 2D para Python utilizado na aula de Introdução à 
+Física de Jogos na Faculdade UnB Gama. A FGAme tem como objetivos principais a simplicidade e 
 modularidade: queremos desenvolver jogos rapidamente e conseguir trocar qualquer 
-aspecto da simulação de física de maneira relativamente simples. Trata-se de
+aspecto da simulação de física de maneira simples. Trata-se de
 um motor de jogos didático cujo maior objetivo é o uso em sala de aula. 
 
 Este não é (e provavelmente nunca será) um motor de alto desempenho. Ainda que
-se tenha dado alguma atenção à otimização, esta não é uma prioridade do código.
-É lógico que computadores modernos são extremamente poderosos e, apesar das 
-limitações desta biblioteca, ainda assim podem ser capazes de simular algumas 
-centenas de polígonos e criar jogos interessantes baseados em física.
+se tenha dado alguma atenção à otimização, esta não é uma prioridade do projeto.
+Dito isto, computadores modernos são poderosos o suficiente para, apesar das 
+limitações desta biblioteca, ainda assim podem ser capazes de simular muitas 
+dezenas de polígonos e criar jogos interessantes baseados em física.
 
 O foco da FGAme está ná física e não na apresentação gráfica. Espere um motor 
 de jogos bastante limitado no segundo quesito, mas relativamente versátil e 
@@ -21,7 +21,7 @@ muito simples de utilizar no primeiro.
 Instalação
 ==========
 
-A engine é capaz de rodar em diversas plataformas. A FGAme funciona tanto em 
+FGAme é capaz de rodar em diversas plataformas. Ela funciona tanto em 
 Python2 quanto em Python3 e utiliza algumas extensões escritas em Cython (que 
 são traduzidas para C e posteriormente compiladas). Além disto, é necessário
 instalar pelo menos um backend entre os suportados: pygame ou sdl2 (e 
@@ -38,18 +38,17 @@ Ubuntu
 (Alguém confirme pois não utilizo o Ubuntu, e sim o Archlinux. Provavelmente
 o nome dos pacotes está errado.)
 No Ubuntu e similares, basta utilizar o comando apt-get para instalar as 
-dependências necessárias. Depois instale a biblioteca utilizando o PIP. Basta
-rodar o comando abaixo no terminal e esperar a instalação terminar::
+dependências necessárias. Depois instale a biblioteca utilizando o PIP. Comece 
+executando o comando abaixo no terminal::
 
   $ sudo apt-get install python3-pygame python3-pip cython
 
-Se quiser instalar algum dos outros backends, também execute o comando 
-apropriado::
+Se quiser instalar algum dos outros backends, instale os pacotes apropriados::
 
   $ sudo apt-get install python3-kivy
   $ sudo apt-get install python3-sdl2
 
-O FGAme está presente no PIP e pode ser instalado simplesmente executando
+O FGAme está presente no PIP e pode ser instalado executando::
 
   $ sudo pip3 install FGAme
 
@@ -66,19 +65,48 @@ Cython estão instaladas
   
 para Python 3 ou
 
-  # pacman -S python2-pip cython
+  # pacman -S python2-pip cython python2-pygame
   
 para Python 2.
 
-O pygame está disponível nos repositórios principais apenas para Python2 sob o 
-nome de ``python2-pygame``. A versão de desenvolvimento do Pygame com suporte 
-para Python3 está no pacote ``python-pygame-hg`` do AUR.
+Apenas a versão compilada para Python 2 do Pygame está disponível nos 
+repositórios principais. A versão de desenvolvimento do Pygame possui suporte 
+para Python3 e pode ser instalada a partir do pacote ``python-pygame-hg`` no 
+AUR. Ela deve ser instalada antes de proceder com a instalação da FGAme.
 
 Finalmente, execute o PIP para compilar e instalar a FGAme
 
    # pip install FGAme
 
 (ou utilize o pip2, para Python2).
+
+Instalando a partir do código fonte
+...................................
+
+É possível que um ou mais pacotes necessários para executar a FGAme não estejam 
+disponíveis na sua distribuição. (Por exemplo, as versões mais antigas do Ubuntu
+podem não possuir os pacotes necessários). Neste caso, é necessário instalar um 
+ou mais pacotes a partir do código fonte. 
+
+Fornecemos o caminho para as páginas de download de cada um dos pacotes 
+necessários para executar a FGAme. Você deve possuir os pacotes de 
+desenvolvimento instalados na sua máquina antes de continuar. Lembre-se de 
+sempre priorizar os pacotes já disponíveis no gerenciador de pacotes da sua
+distribuição e instale apenas aqueles que estão faltando.
+
+  * Python3: 
+  * Cython:
+  * Pygame:
+  * Kivy (opcional): 
+  * Sdl2 (opcional):
+  * FGAme: 
+  
+Em cada caso, consulte o arquivo README ou INSTALL para instruções de 
+instalação. Na maior parte dos casos basta descompactar o arquivo de código
+fonte, entrar na pasta descomprimida e executar::
+ 
+	# python setup.py build
+	# sudo python setup.py install 
 
 Windows
 -------

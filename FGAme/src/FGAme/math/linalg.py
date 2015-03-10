@@ -277,8 +277,8 @@ class Matrix(object):
     (1.0, 1.0)
     '''
 
-    def __init__(self, data):
-        self._data = tuple(Vector(*row) for row in data)
+    def __init__(self, obj):
+        self._data = tuple(Vector(*row) for row in obj)
 
     # Construtores alternativos ------------------------------------------------
     @classmethod

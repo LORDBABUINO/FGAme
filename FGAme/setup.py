@@ -5,15 +5,15 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
 setup(name='FGAme',
-      version='0.2a',
+      version='0.3a',
       description='A game engine for 2D physics',
       author='Fábio Macêdo Mendes',
       author_email='fabiomacedomendes@gmail.com',
       url='code.google.com/p/fgame',
       long_description=(
 r'''A game engine for 2D physics. FGAme was developed for a course on computer 
-games physics. Hence simplicity and ease to use were valued more than raw 
-performance.
+games physics. Simplicity and ease to use were valued more than raw performance
+and fancy graphics.
 
 Main features:
   * AABB's, Circle and Convex Polygons collisions.

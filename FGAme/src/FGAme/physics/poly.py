@@ -1,7 +1,7 @@
 #-*- coding: utf8 -*-
 
 from FGAme.physics import Object, AABB, Collision, get_collision
-from FGAme.draw import DPolygon
+from FGAme.draw import PolyEcho
 from FGAme.math import Vector, VectorM, dot, cross
 from FGAme.math import area, center_of_mass, ROG_sqr
 from FGAme.math import sin, cos, pi
@@ -151,7 +151,7 @@ class Poly(Object):
     #===========================================================================
     def get_primitive_drawable(self, color='black', solid=True, lw=0):
         
-        return DPolygon(self, color, solid, lw)
+        return PolyEcho(self, color, solid, lw)
 
     def move(self, delta):
         super(Poly, self).move(delta)

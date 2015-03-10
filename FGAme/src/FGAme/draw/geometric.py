@@ -38,7 +38,7 @@ class Geometric(Drawable):
 
     def as_poly(self):
         vertices = self.as_vertices(relative=True)
-        return Polygon(vertices, pos=self.pos, color=self.color, solid=self.solid)
+        return Poly(vertices, pos=self.pos, color=self.color, solid=self.solid)
 
     def as_vertices(self, relative=False):
         raise NotImplementedError
@@ -57,7 +57,7 @@ class Circle(Geometric):
         '''Retorna a aproximação do círculo como um polígono de N lados'''
 
         vertices = self.as_vertices(N, relative=True, scaled=True)
-        return Polygon(vertices, pos=self.pos, color=self.color, solid=self.solid)
+        return Poly(vertices, pos=self.pos, color=self.color, solid=self.solid)
 
     def as_vertices(self, N=20, relative=False, scaled=True):
         R = self._radius * (self._scale if scaled else 1)
@@ -126,7 +126,7 @@ class RectangleAA(Geometric):
         '''Retorna o retângulo como um objeto do tipo polígono'''
 
         vertices = self.as_vertices(mode, relative=True)
-        return Polygon(vertices, pos=self.pos, color=self.color, solid=self.solid)
+        return Poly(vertices, pos=self.pos, color=self.color, solid=self.solid)
 
     def as_vertices(self, mode=4, relative=False, scaled=True):
         '''Calcula apenas os vértices do polígono
@@ -173,7 +173,7 @@ class RectangleAA(Geometric):
         else:
             return [ (x + X, y + Y) for (x, y) in vertices ]
 
-class Polygon(Geometric):
+class Poly(Geometric):
     '''Objetos da classe Poly representam polígonos especificados por uma lista
     de vértices.'''
     
@@ -181,7 +181,7 @@ class Polygon(Geometric):
     __slots__ = ['vertices']
     
     def __init__(self, vertices, color='black', solid=True, lw=0):
-        super(Polygon, self).__init__((0, 0), 0, color, solid, lw)
+        super(Poly, self).__init__((0, 0), 0, color, solid, lw)
         self.vertices = vertices
 
     def as_poly(self):
@@ -200,15 +200,18 @@ class Polygon(Geometric):
 #===============================================================================
 # Delegate classes
 #===============================================================================
-class GeometricDelegate(object):
-    __slots__ = ['data', 'color', 'lw', 'solid']
+class GeometricEcho(object):
+    '''Classe base para objetos geométricos sem estado que assumem suas 
+    características do objeto físico correspondente'''
+    
+    __slots__ = ['obj', 'color', 'lw', 'solid']
 
-    def __init__(self, data, color=None, lw=None, solid=None):
-        self.data = data
+    def __init__(self, obj, color=None, lw=None, solid=None):
+        self.obj = obj
         
         if color is None:
             try:
-                self.color = data.color or Color('black')
+                self.color = obj.color or Color('black')
             except AttributeError:
                 self.color = Color('black')
         else:
@@ -216,7 +219,7 @@ class GeometricDelegate(object):
         
         if lw is None:
             try:
-                self.lw = data.lw
+                self.lw = obj.lw
             except AttributeError:
                 self.lw = 0.0
         else:
@@ -224,7 +227,7 @@ class GeometricDelegate(object):
         
         if solid is None:
             try:
-                self.solid = data.solid
+                self.solid = obj.solid
             except AttributeError:
                 self.solid = True
         else:
@@ -232,39 +235,39 @@ class GeometricDelegate(object):
             
     @property
     def pos(self):
-        return self.data.pos
+        return self.obj.pos
     
     @property
     def theta(self):
-        return self.data.theta
+        return self.obj.theta
     
-class DCircle(GeometricDelegate):
+class CircleEcho(GeometricEcho):
     base = Circle
     is_circle = True
     
     @property
     def radius(self):
-        return self.data.radius
+        return self.obj.radius
 
-class DRectangleAA(GeometricDelegate):
+class RectEcho(GeometricEcho):
     base = RectangleAA
     is_rect = True
     
     @property
     def shape(self):
-        return self.data.shape
+        return self.obj.shape
 
     @property
     def rect(self):
-        return self.data.rect
+        return self.obj.rect
     
-class DPolygon(GeometricDelegate):
-    base = Polygon
+class PolyEcho(GeometricEcho):
+    base = Poly
     is_poly = True
 
     @property
     def vertices(self):
-        return self.data.vertices
+        return self.obj.vertices
 
 if __name__ == '__main__':
     import doctest
